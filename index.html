@@ -1,0 +1,1288 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Космический Стрелок</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            background: #000;
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            position: fixed;
+        }
+        
+        #gameContainer {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        #gameCanvas {
+            display: block;
+            background: #000;
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+        
+        /* UI элементы игры */
+        .stats-bar {
+            position: fixed;
+            top: max(env(safe-area-inset-top, 15px), 15px);
+            left: 15px;
+            right: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px 18px;
+            border-radius: 10px;
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(0, 168, 255, 0.4);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            z-index: 100;
+        }
+        
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0 5px;
+        }
+        
+        .stat-value {
+            font-size: 22px;
+            font-weight: bold;
+            color: #00ff88;
+            text-shadow: 0 0 6px rgba(0, 255, 136, 0.4);
+        }
+        
+        .stat-label {
+            font-size: 10px;
+            color: #88aaff;
+            margin-top: 2px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            opacity: 0.9;
+        }
+        
+        .health-container {
+            position: fixed;
+            bottom: 90px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 50, 50, 0.3);
+            min-width: 180px;
+            z-index: 100;
+        }
+        
+        .health-label {
+            font-size: 9px;
+            color: #ff6666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+            opacity: 0.9;
+        }
+        
+        .health-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 50, 50, 0.2);
+            border-radius: 3px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .health-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff3232, #00ff88);
+            width: 100%;
+            transition: width 0.3s ease;
+            border-radius: 3px;
+        }
+        
+        .health-numbers {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-top: 3px;
+            font-size: 11px;
+            color: #88aaff;
+        }
+        
+        /* Меню улучшений */
+        .menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 5, 15, 0.97);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(15px);
+        }
+        
+        .upgrades-content {
+            background: rgba(0, 15, 30, 0.95);
+            padding: 25px;
+            border-radius: 16px;
+            border: 2px solid rgba(0, 168, 255, 0.6);
+            max-width: 450px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+        }
+        
+        .upgrades-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        
+        .upgrades-header h1 {
+            color: #00a8ff;
+            font-size: 26px;
+            margin-bottom: 8px;
+            font-weight: 600;
+            text-shadow: 0 0 10px rgba(0, 168, 255, 0.3);
+        }
+        
+        .upgrades-header p {
+            color: #88aaff;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .coins-display {
+            background: linear-gradient(135deg, rgba(255, 204, 0, 0.1), rgba(255, 153, 0, 0.1));
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 204, 0, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .coins-display::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #ffcc00, transparent);
+        }
+        
+        .coins-display .label {
+            color: #ffcc00;
+            font-size: 15px;
+            opacity: 0.9;
+        }
+        
+        .coins-display .value {
+            color: #ffcc00;
+            font-size: 32px;
+            font-weight: bold;
+            margin-top: 5px;
+            text-shadow: 0 0 12px rgba(255, 204, 0, 0.4);
+        }
+        
+        .upgrade-item {
+            background: rgba(0, 30, 60, 0.6);
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 168, 255, 0.4);
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .upgrade-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: #00a8ff;
+            opacity: 0.5;
+        }
+        
+        .upgrade-info {
+            flex: 1;
+            padding-right: 10px;
+        }
+        
+        .upgrade-name {
+            font-size: 16px;
+            color: #00ff88;
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+        
+        .upgrade-desc {
+            font-size: 12px;
+            color: #88aaff;
+            margin-bottom: 6px;
+            opacity: 0.8;
+            line-height: 1.3;
+        }
+        
+        .upgrade-level {
+            font-size: 11px;
+            color: #ffcc00;
+            opacity: 0.9;
+        }
+        
+        .upgrade-price {
+            font-size: 20px;
+            color: #ffcc00;
+            font-weight: bold;
+            margin-left: 12px;
+            min-width: 60px;
+            text-align: right;
+            text-shadow: 0 0 8px rgba(255, 204, 0, 0.3);
+        }
+        
+        .upgrade-btn {
+            background: linear-gradient(135deg, rgba(0, 168, 255, 0.3), rgba(0, 100, 200, 0.3));
+            border: 1px solid rgba(0, 168, 255, 0.6);
+            color: #88ddff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-left: 15px;
+            transition: all 0.2s;
+            min-width: 90px;
+            font-size: 14px;
+        }
+        
+        .upgrade-btn:active {
+            background: linear-gradient(135deg, rgba(0, 168, 255, 0.5), rgba(0, 100, 200, 0.5));
+            transform: scale(0.95);
+        }
+        
+        .upgrade-btn:disabled {
+            background: rgba(60, 60, 60, 0.3);
+            border-color: rgba(100, 100, 100, 0.4);
+            color: #666;
+            cursor: not-allowed;
+        }
+        
+        .start-game-btn {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.3), rgba(0, 200, 100, 0.3));
+            border: 1px solid rgba(0, 255, 136, 0.6);
+            color: #00ff88;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 25px;
+            width: 100%;
+            transition: all 0.2s;
+            text-shadow: 0 0 8px rgba(0, 255, 136, 0.3);
+        }
+        
+        .start-game-btn:active {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.5), rgba(0, 200, 100, 0.5));
+            transform: scale(0.98);
+        }
+        
+        .final-stats {
+            background: rgba(0, 30, 60, 0.6);
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(0, 168, 255, 0.4);
+        }
+        
+        .final-stats > div:first-child {
+            color: #00ff88;
+            font-size: 18px;
+            margin-bottom: 12px;
+            font-weight: 500;
+            text-align: center;
+        }
+        
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .stat-row:last-child {
+            border-bottom: none;
+        }
+        
+        .stat-row span:first-child {
+            color: #88aaff;
+        }
+        
+        .stat-row span:last-child {
+            color: #00ff88;
+            font-weight: 500;
+        }
+        
+        .stat-row.highlight {
+            background: rgba(255, 204, 0, 0.1);
+            padding: 4px 8px;
+            border-radius: 6px;
+            margin: 8px 0;
+        }
+        
+        .stat-row.highlight span:last-child {
+            color: #ffcc00;
+        }
+        
+        /* Адаптация под iPhone */
+        @media (max-width: 430px) {
+            .stats-bar {
+                top: max(env(safe-area-inset-top, 10px), 10px);
+                padding: 8px 12px;
+                left: 10px;
+                right: 10px;
+            }
+            
+            .stat-value {
+                font-size: 18px;
+            }
+            
+            .stat-label {
+                font-size: 9px;
+            }
+            
+            .health-container {
+                bottom: 70px;
+                min-width: 160px;
+                padding: 6px 12px;
+            }
+            
+            .upgrades-content {
+                padding: 20px;
+            }
+            
+            .upgrades-header h1 {
+                font-size: 22px;
+            }
+            
+            .coins-display .value {
+                font-size: 28px;
+            }
+            
+            .upgrade-item {
+                padding: 14px;
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .upgrade-btn {
+                margin-left: 0;
+                margin-top: 10px;
+                width: 100%;
+            }
+            
+            .upgrade-price {
+                text-align: left;
+                margin-left: 0;
+                margin-top: 5px;
+            }
+        }
+        
+        @media (max-height: 700px) {
+            .health-container {
+                bottom: 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+        
+        <!-- UI элементы игры -->
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-value" id="scoreValue">0</div>
+                <div class="stat-label">Очки</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="coinsValue">50</div>
+                <div class="stat-label">Монеты</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="waveValue">1</div>
+                <div class="stat-label">Волна</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="killsValue">0</div>
+                <div class="stat-label">Уничтожено</div>
+            </div>
+        </div>
+        
+        <div class="health-container">
+            <div class="health-label">ЗДОРОВЬЕ</div>
+            <div class="health-bar">
+                <div class="health-fill" id="healthFill"></div>
+            </div>
+            <div class="health-numbers">
+                <span id="currentHealth">100</span>
+                <span id="maxHealth">100</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Меню улучшений перед игрой -->
+    <div class="menu-overlay" id="startMenu">
+        <div class="upgrades-content">
+            <div class="upgrades-header">
+                <h1>КОСМИЧЕСКИЙ СТРЕЛОК</h1>
+                <p>Улучшите корабль перед началом</p>
+            </div>
+            
+            <div class="coins-display">
+                <div class="label">Ваши монеты</div>
+                <div class="value" id="startCoins">50</div>
+            </div>
+            
+            <div class="upgrade-item">
+                <div class="upgrade-info">
+                    <div class="upgrade-name">Скорость выстрела</div>
+                    <div class="upgrade-desc">-25% задержки между выстрелами</div>
+                    <div class="upgrade-level">Уровень: <span id="startFireRateLevel">1</span></div>
+                </div>
+                <div class="upgrade-price" id="startFireRatePrice">30</div>
+                <button class="upgrade-btn" id="startBuyFireRate">Улучшить</button>
+            </div>
+            
+            <div class="upgrade-item">
+                <div class="upgrade-info">
+                    <div class="upgrade-name">Сила выстрела</div>
+                    <div class="upgrade-desc">+30% урона за уровень</div>
+                    <div class="upgrade-level">Уровень: <span id="startDamageLevel">1</span></div>
+                </div>
+                <div class="upgrade-price" id="startDamagePrice">40</div>
+                <button class="upgrade-btn" id="startBuyDamage">Улучшить</button>
+            </div>
+            
+            <div class="upgrade-item">
+                <div class="upgrade-info">
+                    <div class="upgrade-name">Мультивыстрел</div>
+                    <div class="upgrade-desc">+1 пуля за выстрел за уровень</div>
+                    <div class="upgrade-level">Уровень: <span id="startMultishotLevel">1</span></div>
+                </div>
+                <div class="upgrade-price" id="startMultishotPrice">60</div>
+                <button class="upgrade-btn" id="startBuyMultishot">Улучшить</button>
+            </div>
+            
+            <div class="upgrade-item">
+                <div class="upgrade-info">
+                    <div class="upgrade-name">Макс. здоровье</div>
+                    <div class="upgrade-desc">+15% максимального здоровья</div>
+                    <div class="upgrade-level">Уровень: <span id="startHealthLevel">1</span></div>
+                </div>
+                <div class="upgrade-price" id="startHealthPrice">50</div>
+                <button class="upgrade-btn" id="startBuyHealth">Улучшить</button>
+            </div>
+            
+            <button class="start-game-btn" id="startGameBtn">НАЧАТЬ ИГРУ</button>
+        </div>
+    </div>
+    
+    <!-- Меню улучшений после игры -->
+    <div class="menu-overlay" id="gameOverMenu" style="display: none;">
+        <div class="upgrades-content">
+            <div class="upgrades-header">
+                <h1>ИГРА ОКОНЧЕНА</h1>
+                <p>Улучшите корабль и попробуйте снова</p>
+            </div>
+            
+            <div class="final-stats">
+                <div>Ваш результат</div>
+                <div class="stat-row">
+                    <span>Счет:</span>
+                    <span id="finalScore">0</span>
+                </div>
+                <div class="stat-row">
+                    <span>Волна:</span>
+                    <span id="finalWave">1</span>
+                </div>
+                <div class="stat-row">
+                    <span>Уничтожено врагов:</span>
+                    <span id="finalKills">0</span>
+                </div>
+                <div class="stat-row highlight">
+                    <span>Монеты заработано:</span>
+                    <span id="finalCoinsEarned">0</span>
+                </div>
+            </div>
+            
+            <div class="coins-display">
+                <div class="label">Всего монет</div>
+                <div class="value" id="gameOverCoins">50</div>
+            </div>
+            
+            <div class="upgrade-item">
+                <div class="upgrade-info">
+                    <div class="upgrade-name">Скорость выстрела</div>
+                    <div class="upgrade-desc">-25% задержки между выстрелами</div>
+                    <div class="upgrade-level">Уровень: <span id="gameOverFireRateLevel">1</span></div>
+                </div>
+                <div class="upgrade-price" id="gameOverFireRatePrice">30</div>
+                <button class="upgrade-btn" id="gameOverBuyFireRate">Улучшить</button>
+            </div>
+            
+            <div class="upgrade-item">
+                <div class="upgrade-info">
+                    <div class="upgrade-name">Сила выстрела</div>
+                    <div class="upgrade-desc">+30% урона за уровень</div>
+                    <div class="upgrade-level">Уровень: <span id="gameOverDamageLevel">1</span></div>
+                </div>
+                <div class="upgrade-price" id="gameOverDamagePrice">40</div>
+                <button class="upgrade-btn" id="gameOverBuyDamage">Улучшить</button>
+            </div>
+            
+            <div class="upgrade-item">
+                <div class="upgrade-info">
+                    <div class="upgrade-name">Мультивыстрел</div>
+                    <div class="upgrade-desc">+1 пуля за выстрел за уровень</div>
+                    <div class="upgrade-level">Уровень: <span id="gameOverMultishotLevel">1</span></div>
+                </div>
+                <div class="upgrade-price" id="gameOverMultishotPrice">60</div>
+                <button class="upgrade-btn" id="gameOverBuyMultishot">Улучшить</button>
+            </div>
+            
+            <div class="upgrade-item">
+                <div class="upgrade-info">
+                    <div class="upgrade-name">Макс. здоровье</div>
+                    <div class="upgrade-desc">+15% максимального здоровья</div>
+                    <div class="upgrade-level">Уровень: <span id="gameOverHealthLevel">1</span></div>
+                </div>
+                <div class="upgrade-price" id="gameOverHealthPrice">50</div>
+                <button class="upgrade-btn" id="gameOverBuyHealth">Улучшить</button>
+            </div>
+            
+            <button class="start-game-btn" id="restartGameBtn">ИГРАТЬ СНОВА</button>
+        </div>
+    </div>
+
+    <script>
+        // Инициализация игры
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Игровые переменные
+        const game = {
+            running: false,
+            score: 0,
+            totalCoins: 50,
+            coinsEarned: 0,
+            wave: 1,
+            kills: 0,
+            playerHealth: 100,
+            maxHealth: 100,
+            player: {
+                x: 0,
+                y: 0,
+                width: 50,
+                height: 80,
+                speed: 8,
+                color: '#00a8ff'
+            },
+            bullets: [],
+            enemies: [],
+            lastShot: 0,
+            waveTimer: 0,
+            enemySpawnTimer: 0,
+            touchX: 0,
+            isTouching: false,
+            upgrades: {
+                fireRate: { level: 1, cost: 30, value: 400 },
+                damage: { level: 1, cost: 40, value: 10 },
+                multishot: { level: 1, cost: 60, value: 1 },
+                health: { level: 1, cost: 50, value: 100 }
+            },
+            stars: []
+        };
+        
+        // Создание звездного фона (ненавязчивого)
+        function createStars() {
+            game.stars = [];
+            for (let i = 0; i < 100; i++) {
+                game.stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: Math.random() * 1.5 + 0.5,
+                    brightness: Math.random() * 0.4 + 0.2,
+                    speed: Math.random() * 0.3 + 0.1
+                });
+            }
+        }
+        
+        // Отрисовка звездного фона
+        function drawStars() {
+            // Черный фон
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Ненавязчивые звезды
+            ctx.fillStyle = '#ffffff';
+            game.stars.forEach(star => {
+                ctx.globalAlpha = star.brightness;
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Медленное движение звезд
+                star.y += star.speed;
+                if (star.y > canvas.height) {
+                    star.y = 0;
+                    star.x = Math.random() * canvas.width;
+                }
+            });
+            ctx.globalAlpha = 1;
+        }
+        
+        // Адаптивный размер canvas
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            createStars();
+        }
+        
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        
+        // Инициализация игрока
+        function initPlayer() {
+            game.player.x = canvas.width / 2 - game.player.width / 2;
+            game.player.y = canvas.height - 200;
+        }
+        
+        // Отрисовка корабля (вытянутый, в стиле противников)
+        function drawPlayer() {
+            const p = game.player;
+            const cornerRadius = 8;
+            
+            // Основной корпус с закругленными углами
+            ctx.fillStyle = p.color;
+            ctx.beginPath();
+            ctx.roundRect(p.x, p.y, p.width, p.height, cornerRadius);
+            ctx.fill();
+            
+            // Внутренняя деталь
+            ctx.fillStyle = 'rgba(0, 100, 200, 0.7)';
+            ctx.beginPath();
+            ctx.roundRect(p.x + 4, p.y + 4, p.width - 8, p.height - 8, cornerRadius - 3);
+            ctx.fill();
+            
+            // Кабина
+            ctx.fillStyle = 'rgba(180, 230, 255, 0.9)';
+            ctx.beginPath();
+            ctx.roundRect(p.x + 15, p.y + 15, 20, 12, 4);
+            ctx.fill();
+            
+            // Детализированные двигатели
+            const engineY = p.y + p.height;
+            const engineWidth = 12;
+            const engineHeight = 25;
+            
+            // Левый двигатель
+            drawEngine(p.x + 10, engineY, engineWidth, engineHeight, 0);
+            // Правый двигатель
+            drawEngine(p.x + p.width - 22, engineY, engineWidth, engineHeight, Math.PI);
+            
+            // Панель с индикаторами
+            ctx.fillStyle = 'rgba(0, 40, 80, 0.8)';
+            ctx.beginPath();
+            ctx.roundRect(p.x + 10, p.y + p.height - 35, p.width - 20, 8, 3);
+            ctx.fill();
+            
+            // Индикаторы на панели
+            ctx.fillStyle = '#00ff88';
+            for (let i = 0; i < 3; i++) {
+                ctx.beginPath();
+                ctx.arc(p.x + 15 + i * 15, p.y + p.height - 31, 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        // Отрисовка детализированного двигателя
+        function drawEngine(x, y, width, height, offset) {
+            // Корпус двигателя
+            ctx.fillStyle = '#333344';
+            ctx.beginPath();
+            ctx.roundRect(x, y, width, height, 4);
+            ctx.fill();
+            
+            // Внутренняя часть двигателя
+            ctx.fillStyle = '#222233';
+            ctx.beginPath();
+            ctx.roundRect(x + 2, y + 2, width - 4, height - 4, 2);
+            ctx.fill();
+            
+            // Реактивная струя с анимацией
+            const flameHeight = 18 + Math.sin(Date.now() / 80 + offset) * 6;
+            const gradient = ctx.createLinearGradient(x, y + height, x, y + height + flameHeight);
+            gradient.addColorStop(0, '#ff5500');
+            gradient.addColorStop(0.3, '#ff9900');
+            gradient.addColorStop(0.7, '#ffff00');
+            gradient.addColorStop(1, 'transparent');
+            
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.moveTo(x + 2, y + height);
+            ctx.lineTo(x + width - 2, y + height);
+            ctx.lineTo(x + width / 2, y + height + flameHeight);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Искры
+            ctx.fillStyle = '#ffff00';
+            for (let i = 0; i < 3; i++) {
+                const sparkX = x + width / 2 + (Math.random() - 0.5) * 8;
+                const sparkY = y + height + Math.random() * 8;
+                ctx.beginPath();
+                ctx.arc(sparkX, sparkY, 1, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        // Автоматическая стрельба
+        function autoShoot() {
+            const now = Date.now();
+            const fireDelay = game.upgrades.fireRate.value;
+            
+            if (now - game.lastShot < fireDelay) return;
+            
+            game.lastShot = now;
+            const bulletCount = game.upgrades.multishot.value;
+            
+            for (let i = 0; i < bulletCount; i++) {
+                let offsetX = 0;
+                if (bulletCount > 1) {
+                    offsetX = (i - (bulletCount - 1) / 2) * 12;
+                }
+                
+                game.bullets.push({
+                    x: game.player.x + game.player.width / 2 - 3 + offsetX,
+                    y: game.player.y + 8,
+                    width: 6,
+                    height: 20,
+                    speed: 14,
+                    damage: game.upgrades.damage.value,
+                    color: bulletCount > 1 ? '#00ff88' : '#00a8ff'
+                });
+            }
+        }
+        
+        // Создание противника (с закругленными углами)
+        function createEnemy() {
+            const size = 35 + Math.random() * 25;
+            const health = 25 + (game.wave - 1) * 3;
+            const colors = ['#ff5555', '#ff8855', '#aa55ff', '#55aaff'];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            
+            game.enemies.push({
+                x: Math.random() * (canvas.width - size),
+                y: -size,
+                width: size,
+                height: size,
+                speed: 1.5 + game.wave * 0.15,
+                health: health,
+                maxHealth: health,
+                color: color,
+                value: 3 + Math.floor(game.wave / 2)
+            });
+        }
+        
+        // Отрисовка противника
+        function drawEnemy(enemy) {
+            const cornerRadius = 10;
+            
+            // Тело врага с закругленными углами
+            ctx.fillStyle = enemy.color;
+            ctx.beginPath();
+            ctx.roundRect(enemy.x, enemy.y, enemy.width, enemy.height, cornerRadius);
+            ctx.fill();
+            
+            // Внутренний прямоугольник для деталей
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.beginPath();
+            ctx.roundRect(enemy.x + 5, enemy.y + 5, enemy.width - 10, enemy.height - 10, cornerRadius - 4);
+            ctx.fill();
+            
+            // Полоска здоровья (простая)
+            const healthPercent = enemy.health / enemy.maxHealth;
+            ctx.fillStyle = '#ff5555';
+            ctx.fillRect(enemy.x, enemy.y - 6, enemy.width, 4);
+            ctx.fillStyle = healthPercent > 0.5 ? '#00ff88' : '#ffaa00';
+            ctx.fillRect(enemy.x, enemy.y - 6, enemy.width * healthPercent, 4);
+            
+            // Значок на враге
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('✸', enemy.x + enemy.width / 2, enemy.y + enemy.height / 2 + 6);
+        }
+        
+        // Добавляем функцию roundRect если её нет
+        if (!ctx.roundRect) {
+            ctx.roundRect = function(x, y, width, height, radius) {
+                if (width < 2 * radius) radius = width / 2;
+                if (height < 2 * radius) radius = height / 2;
+                
+                ctx.beginPath();
+                ctx.moveTo(x + radius, y);
+                ctx.lineTo(x + width - radius, y);
+                ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+                ctx.lineTo(x + width, y + height - radius);
+                ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+                ctx.lineTo(x + radius, y + height);
+                ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+                ctx.lineTo(x, y + radius);
+                ctx.quadraticCurveTo(x, y, x + radius, y);
+                ctx.closePath();
+            };
+        }
+        
+        // Проверка столкновений
+        function checkCollision(rect1, rect2) {
+            return !(rect1.x > rect2.x + rect2.width || 
+                    rect1.x + rect1.width < rect2.x || 
+                    rect1.y > rect2.y + rect2.height || 
+                    rect1.y + rect1.height < rect2.y);
+        }
+        
+        // Обновление игры
+        function update() {
+            if (!game.running) return;
+            
+            // Движение игрока
+            if (game.isTouching) {
+                const targetX = game.touchX - game.player.width / 2;
+                const dx = targetX - game.player.x;
+                game.player.x += dx * 0.15;
+                
+                game.player.x = Math.max(0, Math.min(game.player.x, canvas.width - game.player.width));
+            }
+            
+            // Автоматическая стрельба
+            autoShoot();
+            
+            // Обновление таймеров
+            game.waveTimer++;
+            game.enemySpawnTimer++;
+            
+            // Новая волна каждые 1800 кадров (~30 секунд)
+            if (game.waveTimer > 1800) {
+                game.wave++;
+                game.waveTimer = 0;
+                updateDisplay('waveValue', game.wave);
+            }
+            
+            // Создание врагов
+            if (game.enemySpawnTimer > Math.max(30, 90 - game.wave * 2)) {
+                createEnemy();
+                game.enemySpawnTimer = 0;
+            }
+            
+            // Обновление пуль
+            for (let i = game.bullets.length - 1; i >= 0; i--) {
+                const bullet = game.bullets[i];
+                bullet.y -= bullet.speed;
+                
+                if (bullet.y < -bullet.height) {
+                    game.bullets.splice(i, 1);
+                    continue;
+                }
+                
+                for (let j = game.enemies.length - 1; j >= 0; j--) {
+                    const enemy = game.enemies[j];
+                    
+                    if (checkCollision(bullet, enemy)) {
+                        enemy.health -= bullet.damage;
+                        game.bullets.splice(i, 1);
+                        
+                        if (enemy.health <= 0) {
+                            let coinsEarned = enemy.value;
+                            if (game.wave > 5) coinsEarned += 1;
+                            if (game.wave > 10) coinsEarned += 2;
+                            
+                            game.score += 10 + game.wave * 2;
+                            game.coinsEarned += coinsEarned;
+                            game.totalCoins += coinsEarned;
+                            game.kills++;
+                            
+                            updateAllDisplays();
+                            
+                            game.enemies.splice(j, 1);
+                        }
+                        break;
+                    }
+                }
+            }
+            
+            // Обновление врагов
+            for (let i = game.enemies.length - 1; i >= 0; i--) {
+                const enemy = game.enemies[i];
+                enemy.y += enemy.speed;
+                
+                if (checkCollision(game.player, enemy)) {
+                    game.playerHealth -= 15;
+                    updateHealthDisplay();
+                    game.enemies.splice(i, 1);
+                    
+                    if (game.playerHealth <= 0) {
+                        gameOver();
+                        return;
+                    }
+                }
+                
+                if (enemy.y > canvas.height) {
+                    game.enemies.splice(i, 1);
+                }
+            }
+        }
+        
+        // Отрисовка игры
+        function draw() {
+            drawStars();
+            drawPlayer();
+            
+            // Пули
+            game.bullets.forEach(bullet => {
+                ctx.fillStyle = bullet.color;
+                ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+            });
+            
+            // Враги
+            game.enemies.forEach(drawEnemy);
+        }
+        
+        // Обновление отображений
+        function updateAllDisplays() {
+            updateDisplay('scoreValue', game.score);
+            updateDisplay('coinsValue', game.totalCoins);
+            updateDisplay('waveValue', game.wave);
+            updateDisplay('killsValue', game.kills);
+            updateMenuDisplays();
+        }
+        
+        function updateDisplay(elementId, value) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.textContent = value;
+            }
+        }
+        
+        function updateHealthDisplay() {
+            const healthPercent = game.playerHealth / game.maxHealth;
+            const healthFill = document.getElementById('healthFill');
+            if (healthFill) {
+                healthFill.style.width = `${healthPercent * 100}%`;
+            }
+            updateDisplay('currentHealth', Math.ceil(game.playerHealth));
+            updateDisplay('maxHealth', game.maxHealth);
+        }
+        
+        // Обновление меню
+        function updateMenuDisplays() {
+            // Стартовое меню
+            updateDisplay('startCoins', game.totalCoins);
+            updateDisplay('startFireRateLevel', game.upgrades.fireRate.level);
+            updateDisplay('startFireRatePrice', game.upgrades.fireRate.cost);
+            updateDisplay('startDamageLevel', game.upgrades.damage.level);
+            updateDisplay('startDamagePrice', game.upgrades.damage.cost);
+            updateDisplay('startMultishotLevel', game.upgrades.multishot.level);
+            updateDisplay('startMultishotPrice', game.upgrades.multishot.cost);
+            updateDisplay('startHealthLevel', game.upgrades.health.level);
+            updateDisplay('startHealthPrice', game.upgrades.health.cost);
+            
+            // Меню после игры
+            updateDisplay('finalScore', game.score);
+            updateDisplay('finalWave', game.wave);
+            updateDisplay('finalKills', game.kills);
+            updateDisplay('finalCoinsEarned', game.coinsEarned);
+            updateDisplay('gameOverCoins', game.totalCoins);
+            updateDisplay('gameOverFireRateLevel', game.upgrades.fireRate.level);
+            updateDisplay('gameOverFireRatePrice', game.upgrades.fireRate.cost);
+            updateDisplay('gameOverDamageLevel', game.upgrades.damage.level);
+            updateDisplay('gameOverDamagePrice', game.upgrades.damage.cost);
+            updateDisplay('gameOverMultishotLevel', game.upgrades.multishot.level);
+            updateDisplay('gameOverMultishotPrice', game.upgrades.multishot.cost);
+            updateDisplay('gameOverHealthLevel', game.upgrades.health.level);
+            updateDisplay('gameOverHealthPrice', game.upgrades.health.cost);
+            
+            updateUpgradeButtons();
+        }
+        
+        function updateUpgradeButtons() {
+            const buttons = [
+                { id: 'startBuyFireRate', cost: game.upgrades.fireRate.cost },
+                { id: 'startBuyDamage', cost: game.upgrades.damage.cost },
+                { id: 'startBuyMultishot', cost: game.upgrades.multishot.cost },
+                { id: 'startBuyHealth', cost: game.upgrades.health.cost },
+                { id: 'gameOverBuyFireRate', cost: game.upgrades.fireRate.cost },
+                { id: 'gameOverBuyDamage', cost: game.upgrades.damage.cost },
+                { id: 'gameOverBuyMultishot', cost: game.upgrades.multishot.cost },
+                { id: 'gameOverBuyHealth', cost: game.upgrades.health.cost }
+            ];
+            
+            buttons.forEach(button => {
+                const btn = document.getElementById(button.id);
+                if (btn) {
+                    btn.disabled = game.totalCoins < button.cost;
+                }
+            });
+        }
+        
+        // Покупка улучшения
+        function buyUpgrade(type) {
+            console.log('Покупка улучшения:', type);
+            const upgrade = game.upgrades[type];
+            
+            if (game.totalCoins >= upgrade.cost) {
+                game.totalCoins -= upgrade.cost;
+                
+                switch(type) {
+                    case 'fireRate':
+                        upgrade.value = Math.max(100, upgrade.value * 0.75);
+                        upgrade.level++;
+                        upgrade.cost = Math.floor(upgrade.cost * (1.5 + upgrade.level * 0.1));
+                        break;
+                    case 'damage':
+                        upgrade.value = Math.floor(upgrade.value * 1.3);
+                        upgrade.level++;
+                        upgrade.cost = Math.floor(upgrade.cost * (1.6 + upgrade.level * 0.15));
+                        break;
+                    case 'multishot':
+                        upgrade.value++;
+                        upgrade.level++;
+                        upgrade.cost = Math.floor(upgrade.cost * (2 + upgrade.level * 0.2));
+                        break;
+                    case 'health':
+                        game.maxHealth = Math.floor(game.maxHealth * 1.15);
+                        game.playerHealth = game.maxHealth;
+                        upgrade.level++;
+                        upgrade.cost = Math.floor(upgrade.cost * (1.7 + upgrade.level * 0.12));
+                        break;
+                }
+                
+                updateAllDisplays();
+                updateHealthDisplay();
+                console.log('Улучшение куплено! Уровень:', upgrade.level);
+            }
+        }
+        
+        // Конец игры
+        function gameOver() {
+            console.log('Игра окончена');
+            game.running = false;
+            
+            if (game.wave >= 10) {
+                const bonus = Math.floor(game.wave / 5) * 5;
+                game.totalCoins += bonus;
+                game.coinsEarned += bonus;
+            }
+            
+            const gameOverMenu = document.getElementById('gameOverMenu');
+            if (gameOverMenu) {
+                gameOverMenu.style.display = 'flex';
+            }
+            updateMenuDisplays();
+        }
+        
+        // Начало новой игры
+        function startNewGame() {
+            console.log('Начало новой игры');
+            game.running = true;
+            game.score = 0;
+            game.coinsEarned = 0;
+            game.wave = 1;
+            game.kills = 0;
+            game.playerHealth = game.maxHealth;
+            game.bullets = [];
+            game.enemies = [];
+            game.waveTimer = 0;
+            game.enemySpawnTimer = 0;
+            
+            initPlayer();
+            updateAllDisplays();
+            updateHealthDisplay();
+            
+            // Скрываем меню
+            document.getElementById('startMenu').style.display = 'none';
+            document.getElementById('gameOverMenu').style.display = 'none';
+        }
+        
+        // Игровой цикл
+        function gameLoop() {
+            update();
+            draw();
+            if (game.running) {
+                requestAnimationFrame(gameLoop);
+            }
+        }
+        
+        // Настройка сенсорного управления
+        function setupTouchControls() {
+            canvas.addEventListener('touchstart', (e) => {
+                if (!game.running) return;
+                e.preventDefault();
+                const touch = e.touches[0];
+                const rect = canvas.getBoundingClientRect();
+                game.touchX = touch.clientX - rect.left;
+                game.isTouching = true;
+            }, { passive: false });
+            
+            canvas.addEventListener('touchmove', (e) => {
+                if (!game.running) return;
+                e.preventDefault();
+                const touch = e.touches[0];
+                const rect = canvas.getBoundingClientRect();
+                game.touchX = touch.clientX - rect.left;
+            }, { passive: false });
+            
+            canvas.addEventListener('touchend', (e) => {
+                if (!game.running) return;
+                e.preventDefault();
+                game.isTouching = false;
+            }, { passive: false });
+            
+            // Мышь для тестирования
+            canvas.addEventListener('mousedown', (e) => {
+                if (!game.running) return;
+                const rect = canvas.getBoundingClientRect();
+                game.touchX = e.clientX - rect.left;
+                game.isTouching = true;
+            });
+            
+            canvas.addEventListener('mousemove', (e) => {
+                if (!game.running || !game.isTouching) return;
+                const rect = canvas.getBoundingClientRect();
+                game.touchX = e.clientX - rect.left;
+            });
+            
+            canvas.addEventListener('mouseup', () => {
+                if (!game.running) return;
+                game.isTouching = false;
+            });
+            
+            canvas.addEventListener('mouseleave', () => {
+                if (!game.running) return;
+                game.isTouching = false;
+            });
+        }
+        
+        // Инициализация кнопок - ПРЯМАЯ ПРИВЯЗКА
+        function setupButtons() {
+            console.log('Настройка кнопок...');
+            
+            // Кнопка начала игры
+            const startBtn = document.getElementById('startGameBtn');
+            if (startBtn) {
+                startBtn.onclick = function() {
+                    console.log('КЛИК: НАЧАТЬ ИГРУ');
+                    startNewGame();
+                    requestAnimationFrame(gameLoop);
+                };
+            }
+            
+            // Кнопка перезапуска
+            const restartBtn = document.getElementById('restartGameBtn');
+            if (restartBtn) {
+                restartBtn.onclick = function() {
+                    console.log('КЛИК: ИГРАТЬ СНОВА');
+                    startNewGame();
+                    requestAnimationFrame(gameLoop);
+                };
+            }
+            
+            // Кнопки улучшений - стартовое меню
+            const setupUpgradeButton = (buttonId, type) => {
+                const button = document.getElementById(buttonId);
+                if (button) {
+                    button.onclick = function() {
+                        console.log('КЛИК:', buttonId, 'тип:', type);
+                        buyUpgrade(type);
+                    };
+                }
+            };
+            
+            setupUpgradeButton('startBuyFireRate', 'fireRate');
+            setupUpgradeButton('startBuyDamage', 'damage');
+            setupUpgradeButton('startBuyMultishot', 'multishot');
+            setupUpgradeButton('startBuyHealth', 'health');
+            
+            setupUpgradeButton('gameOverBuyFireRate', 'fireRate');
+            setupUpgradeButton('gameOverBuyDamage', 'damage');
+            setupUpgradeButton('gameOverBuyMultishot', 'multishot');
+            setupUpgradeButton('gameOverBuyHealth', 'health');
+            
+            console.log('Кнопки настроены');
+        }
+        
+        // Инициализация
+        function init() {
+            console.log('=== ИНИЦИАЛИЗАЦИЯ ИГРЫ ===');
+            
+            resizeCanvas();
+            initPlayer();
+            setupTouchControls();
+            setupButtons();
+            updateAllDisplays();
+            updateHealthDisplay();
+            
+            // Показываем стартовое меню
+            document.getElementById('startMenu').style.display = 'flex';
+            
+            // Запускаем отрисовку фона
+            requestAnimationFrame(function drawFrame() {
+                drawStars();
+                requestAnimationFrame(drawFrame);
+            });
+            
+            console.log('=== ИГРА ГОТОВА ===');
+            console.log('1. Нажмите "НАЧАТЬ ИГРУ"');
+            console.log('2. Попробуйте купить улучшения');
+            console.log('3. Двигайте корабль касанием');
+        }
+        
+        // Запуск
+        init();
+    </script>
+</body>
+</html>
