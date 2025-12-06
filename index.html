@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Космический Стрелок</title>
     <style>
+        /* Сброс и базовые стили */
         * {
             margin: 0;
             padding: 0;
@@ -12,68 +13,78 @@
             -webkit-tap-highlight-color: transparent;
             -webkit-user-select: none;
             user-select: none;
+            -webkit-text-size-adjust: 100%;
+        }
+        
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            position: fixed;
+            background: #000;
         }
         
         body {
-            background: #000;
-            color: #fff;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            overflow: hidden;
-            height: 100vh;
-            width: 100vw;
-            position: fixed;
-            touch-action: none;
+            color: #fff;
+            overscroll-behavior: none;
+            touch-action: manipulation;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
         
+        /* Game container - занимает весь экран */
         #gameContainer {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             overflow: hidden;
+            z-index: 1;
         }
         
         #gameCanvas {
             display: block;
-            background: #000;
             width: 100%;
             height: 100%;
             touch-action: none;
-            image-rendering: -moz-crisp-edges;
-            image-rendering: -webkit-crisp-edges;
-            image-rendering: pixelated;
-            image-rendering: crisp-edges;
+            image-rendering: optimizeSpeed;
+            image-rendering: -webkit-optimize-contrast;
+            background: #000;
         }
         
         /* FPS счетчик */
         #fpsCounter {
             position: fixed;
-            top: 10px;
+            top: env(safe-area-inset-top, 10px);
             right: 10px;
-            font-size: 11px;
-            color: rgba(255, 255, 255, 0.6);
-            background: rgba(0, 0, 0, 0.3);
-            padding: 3px 6px;
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.7);
+            background: rgba(0, 0, 0, 0.5);
+            padding: 2px 6px;
             border-radius: 3px;
             z-index: 1000;
             font-family: monospace;
             pointer-events: none;
+            backdrop-filter: blur(2px);
         }
         
-        /* UI элементы игры */
+        /* Статус бар - прикреплен к верхней безопасной зоне */
         .stats-bar {
             position: fixed;
-            top: max(env(safe-area-inset-top, 8px), 8px);
+            top: env(safe-area-inset-top, 10px);
             left: 8px;
             right: 8px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.85);
             padding: 6px 10px;
-            border-radius: 6px;
-            backdrop-filter: blur(4px);
-            border: 1px solid rgba(0, 168, 255, 0.3);
-            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 168, 255, 0.4);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
             z-index: 100;
             gap: 4px;
         }
@@ -88,9 +99,9 @@
         
         .stat-value {
             font-size: 14px;
-            font-weight: bold;
+            font-weight: 700;
             color: #00ff88;
-            text-shadow: 0 0 3px rgba(0, 255, 136, 0.4);
+            text-shadow: 0 0 3px rgba(0, 255, 136, 0.5);
             line-height: 1.1;
         }
         
@@ -99,275 +110,411 @@
             color: #88aaff;
             margin-top: 1px;
             text-transform: uppercase;
-            letter-spacing: 0.3px;
+            letter-spacing: 0.5px;
             opacity: 0.9;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
         }
         
-        /* Упрощенная полоска здоровья корабля */
+        /* Здоровье корабля - прикреплено к нижней безопасной зоне */
         .ship-health-bar {
             position: fixed;
-            bottom: 15px;
+            bottom: calc(env(safe-area-inset-bottom, 20px) + 10px);
             left: 50%;
             transform: translateX(-50%);
-            width: 180px;
-            height: 6px;
+            width: 70%;
+            max-width: 300px;
+            min-width: 200px;
+            height: 5px;
             background: rgba(255, 50, 50, 0.2);
             border-radius: 3px;
             overflow: hidden;
             z-index: 100;
             border: 1px solid rgba(255, 50, 50, 0.4);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
         }
         
         .ship-health-fill {
             height: 100%;
-            background: linear-gradient(90deg, #ff3232, #00ff88);
+            background: linear-gradient(90deg, #ff3232, #ff9966, #00ff88);
             width: 100%;
-            transition: width 0.2s ease;
+            transition: width 0.2s ease-out;
             border-radius: 3px;
         }
         
         .ship-health-text {
             position: absolute;
-            top: -15px;
+            top: -18px;
             left: 0;
             right: 0;
             text-align: center;
             font-size: 9px;
             color: #ff8888;
-            text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+            font-weight: 500;
         }
         
-        /* Меню улучшений - компактное */
+        /* Меню улучшений - адаптировано под экран */
         .menu-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 5, 15, 0.98);
+            background: rgba(0, 8, 20, 0.98);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             z-index: 1000;
-            backdrop-filter: blur(8px);
-            padding: 10px;
+            backdrop-filter: blur(15px);
+            padding: env(safe-area-inset-top, 20px) 15px env(safe-area-inset-bottom, 20px);
+            overflow-y: auto;
         }
         
         .upgrades-content {
-            background: rgba(0, 10, 25, 0.95);
-            padding: 15px;
-            border-radius: 10px;
+            background: linear-gradient(135deg, rgba(0, 20, 40, 0.95), rgba(0, 10, 25, 0.97));
+            padding: 20px;
+            border-radius: 16px;
             border: 1px solid rgba(0, 168, 255, 0.5);
             width: 100%;
-            max-width: 340px;
-            max-height: 90vh;
+            max-width: 400px;
+            max-height: calc(100vh - 40px);
             overflow-y: auto;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+            position: relative;
         }
         
         .upgrades-header {
             text-align: center;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(0, 168, 255, 0.3);
         }
         
         .upgrades-header h1 {
             color: #00a8ff;
-            font-size: 18px;
-            margin-bottom: 4px;
-            font-weight: 600;
-            text-shadow: 0 0 6px rgba(0, 168, 255, 0.3);
+            font-size: 22px;
+            margin-bottom: 5px;
+            font-weight: 700;
+            text-shadow: 0 0 10px rgba(0, 168, 255, 0.5);
         }
         
         .upgrades-header p {
             color: #88aaff;
-            font-size: 11px;
+            font-size: 13px;
             opacity: 0.9;
         }
         
         .coins-display {
-            background: linear-gradient(135deg, rgba(255, 204, 0, 0.1), rgba(255, 153, 0, 0.1));
-            padding: 8px;
-            border-radius: 6px;
+            background: linear-gradient(135deg, rgba(255, 204, 0, 0.15), rgba(255, 153, 0, 0.15));
+            padding: 12px;
+            border-radius: 10px;
             text-align: center;
-            margin-bottom: 12px;
-            border: 1px solid rgba(255, 204, 0, 0.3);
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 204, 0, 0.4);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
         
         .coins-display .label {
             color: #ffcc00;
-            font-size: 10px;
-            opacity: 0.9;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 4px;
         }
         
         .coins-display .value {
             color: #ffcc00;
-            font-size: 22px;
-            font-weight: bold;
-            margin-top: 2px;
-            text-shadow: 0 0 6px rgba(255, 204, 0, 0.4);
+            font-size: 28px;
+            font-weight: 700;
+            text-shadow: 0 0 12px rgba(255, 204, 0, 0.5);
+        }
+        
+        /* Улучшения */
+        .upgrades-list {
+            margin-bottom: 20px;
         }
         
         .upgrade-item {
-            background: rgba(0, 20, 40, 0.6);
-            padding: 10px;
-            border-radius: 8px;
+            background: rgba(0, 25, 50, 0.7);
+            padding: 12px 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
             border: 1px solid rgba(0, 168, 255, 0.3);
-            margin-bottom: 8px;
-            position: relative;
+            transition: all 0.2s;
         }
         
-        .upgrade-row {
+        .upgrade-item:hover {
+            background: rgba(0, 30, 60, 0.8);
+            border-color: rgba(0, 168, 255, 0.5);
+        }
+        
+        .upgrade-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 4px;
+            margin-bottom: 5px;
         }
         
         .upgrade-name {
-            font-size: 12px;
+            font-size: 15px;
             color: #00ff88;
-            font-weight: 500;
-        }
-        
-        .upgrade-level {
-            font-size: 9px;
-            color: #ffcc00;
-            opacity: 0.9;
+            font-weight: 600;
         }
         
         .upgrade-price {
-            font-size: 14px;
+            font-size: 16px;
             color: #ffcc00;
-            font-weight: bold;
-            text-shadow: 0 0 4px rgba(255, 204, 0, 0.3);
-            white-space: nowrap;
+            font-weight: 700;
+            text-shadow: 0 0 6px rgba(255, 204, 0, 0.4);
+        }
+        
+        .upgrade-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .upgrade-level {
+            font-size: 11px;
+            color: #ffcc00;
+            font-weight: 500;
+        }
+        
+        .upgrade-desc {
+            font-size: 11px;
+            color: #88aaff;
+            opacity: 0.9;
+            text-align: right;
         }
         
         .upgrade-btn {
-            background: linear-gradient(135deg, rgba(0, 168, 255, 0.3), rgba(0, 100, 200, 0.3));
-            border: 1px solid rgba(0, 168, 255, 0.5);
-            color: #88ddff;
-            padding: 6px 12px;
-            border-radius: 5px;
+            background: linear-gradient(135deg, rgba(0, 168, 255, 0.4), rgba(0, 100, 200, 0.4));
+            border: 1px solid rgba(0, 168, 255, 0.6);
+            color: #fff;
+            padding: 10px;
+            border-radius: 8px;
             font-weight: 600;
+            font-size: 13px;
             cursor: pointer;
-            margin-top: 6px;
             width: 100%;
             transition: all 0.15s;
-            font-size: 11px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
         }
         
         .upgrade-btn:active {
-            background: linear-gradient(135deg, rgba(0, 168, 255, 0.5), rgba(0, 100, 200, 0.5));
-            transform: scale(0.97);
-        }
-        
-        .upgrade-btn:disabled {
-            background: rgba(50, 50, 50, 0.3);
-            border-color: rgba(80, 80, 80, 0.4);
-            color: #666;
-            cursor: not-allowed;
-        }
-        
-        .start-game-btn {
-            background: linear-gradient(135deg, rgba(0, 255, 136, 0.3), rgba(0, 200, 100, 0.3));
-            border: 1px solid rgba(0, 255, 136, 0.5);
-            color: #00ff88;
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 15px;
-            width: 100%;
-            transition: all 0.15s;
-        }
-        
-        .start-game-btn:active {
-            background: linear-gradient(135deg, rgba(0, 255, 136, 0.5), rgba(0, 200, 100, 0.5));
+            background: linear-gradient(135deg, rgba(0, 168, 255, 0.6), rgba(0, 100, 200, 0.6));
             transform: scale(0.98);
         }
         
+        .upgrade-btn:disabled {
+            background: rgba(60, 60, 60, 0.4);
+            border-color: rgba(100, 100, 100, 0.4);
+            color: #888;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        /* Кнопки действий */
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .start-game-btn, .restart-game-btn {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.4), rgba(0, 200, 100, 0.4));
+            border: 1px solid rgba(0, 255, 136, 0.6);
+            color: #fff;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+        
+        .start-game-btn:active, .restart-game-btn:active {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.6), rgba(0, 200, 100, 0.6));
+            transform: scale(0.98);
+        }
+        
+        /* Статистика */
         .final-stats {
-            background: rgba(0, 20, 40, 0.6);
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 12px;
+            background: rgba(0, 25, 50, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
             border: 1px solid rgba(0, 168, 255, 0.3);
         }
         
-        .final-stats > div:first-child {
+        .final-stats h3 {
             color: #00ff88;
-            font-size: 14px;
-            margin-bottom: 8px;
-            font-weight: 500;
+            font-size: 16px;
+            margin-bottom: 12px;
             text-align: center;
+            font-weight: 600;
         }
         
         .stat-row {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 5px;
-            font-size: 11px;
-            padding: 2px 0;
+            align-items: center;
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 13px;
         }
         
-        .stat-row span:first-child {
+        .stat-row:last-child {
+            border-bottom: none;
+        }
+        
+        .stat-label-small {
             color: #88aaff;
         }
         
-        .stat-row span:last-child {
+        .stat-value-small {
             color: #00ff88;
-            font-weight: 500;
+            font-weight: 600;
         }
         
         .stat-row.highlight {
             background: rgba(255, 204, 0, 0.1);
-            padding: 3px 5px;
-            border-radius: 4px;
-            margin: 5px 0;
+            padding: 8px;
+            border-radius: 6px;
+            margin: 8px 0;
+            border: 1px solid rgba(255, 204, 0, 0.2);
         }
         
-        .stat-row.highlight span:last-child {
+        .stat-row.highlight .stat-value-small {
             color: #ffcc00;
         }
         
-        /* Очень маленькие экраны */
-        @media (max-width: 350px) {
+        /* Адаптация для очень маленьких экранов */
+        @media (max-width: 360px) {
             .upgrades-content {
-                padding: 12px;
-                max-width: 320px;
+                padding: 15px;
             }
             
             .upgrades-header h1 {
-                font-size: 16px;
-            }
-            
-            .coins-display .value {
                 font-size: 20px;
             }
             
+            .coins-display .value {
+                font-size: 24px;
+            }
+            
+            .upgrade-item {
+                padding: 10px 12px;
+            }
+            
             .upgrade-name {
-                font-size: 11px;
+                font-size: 14px;
+            }
+            
+            .upgrade-price {
+                font-size: 14px;
             }
             
             .ship-health-bar {
-                width: 160px;
-                bottom: 12px;
+                width: 85%;
+                min-width: 180px;
             }
         }
         
         @media (max-height: 600px) {
             .upgrades-content {
-                max-height: 85vh;
+                max-height: calc(100vh - 30px);
+                padding: 15px;
+            }
+            
+            .upgrades-header {
+                margin-bottom: 15px;
+                padding-bottom: 10px;
+            }
+            
+            .upgrades-header h1 {
+                font-size: 20px;
+            }
+            
+            .coins-display {
+                padding: 10px;
+                margin-bottom: 15px;
+            }
+            
+            .upgrade-item {
+                padding: 10px 12px;
+                margin-bottom: 8px;
+            }
+            
+            .start-game-btn, .restart-game-btn {
+                padding: 14px;
+                font-size: 15px;
+            }
+        }
+        
+        /* Портретная и альбомная ориентация */
+        @media (orientation: landscape) and (max-height: 500px) {
+            .stats-bar {
+                top: 5px;
+                left: 5px;
+                right: 5px;
+                padding: 4px 8px;
+            }
+            
+            .stat-value {
+                font-size: 12px;
+            }
+            
+            .stat-label {
+                font-size: 7px;
             }
             
             .ship-health-bar {
                 bottom: 10px;
+                width: 40%;
+                min-width: 150px;
+            }
+            
+            .ship-health-text {
+                top: -15px;
+                font-size: 8px;
+            }
+            
+            .menu-overlay {
+                padding: 10px;
+            }
+            
+            .upgrades-content {
+                max-height: calc(100vh - 20px);
+                padding: 15px;
+            }
+            
+            .upgrades-header h1 {
+                font-size: 18px;
+            }
+            
+            .upgrade-item {
+                padding: 8px 10px;
+                margin-bottom: 6px;
+            }
+        }
+        
+        /* iPhone X и новее - безопасные зоны */
+        @supports (padding: max(0px)) {
+            .stats-bar {
+                top: max(env(safe-area-inset-top), 10px);
+                left: max(env(safe-area-inset-left), 8px);
+                right: max(env(safe-area-inset-right), 8px);
+            }
+            
+            .ship-health-bar {
+                bottom: max(env(safe-area-inset-bottom), 20px);
+            }
+            
+            .menu-overlay {
+                padding-top: max(env(safe-area-inset-top), 20px);
+                padding-bottom: max(env(safe-area-inset-bottom), 20px);
             }
         }
     </style>
@@ -378,7 +525,7 @@
     <div id="gameContainer">
         <canvas id="gameCanvas"></canvas>
         
-        <!-- UI элементы игры -->
+        <!-- Статус бар -->
         <div class="stats-bar">
             <div class="stat-item">
                 <div class="stat-value" id="scoreValue">0</div>
@@ -398,14 +545,14 @@
             </div>
         </div>
         
-        <!-- Упрощенная полоска здоровья корабля -->
+        <!-- Здоровье корабля -->
         <div class="ship-health-bar">
             <div class="ship-health-text" id="shipHealthText">100/100</div>
             <div class="ship-health-fill" id="shipHealthFill"></div>
         </div>
     </div>
 
-    <!-- Меню улучшений перед игрой -->
+    <!-- Стартовое меню -->
     <div class="menu-overlay" id="startMenu">
         <div class="upgrades-content">
             <div class="upgrades-header">
@@ -418,47 +565,63 @@
                 <div class="value" id="startCoins">50</div>
             </div>
             
-            <div class="upgrade-item">
-                <div class="upgrade-row">
-                    <div class="upgrade-name">Скорость стрельбы</div>
-                    <div class="upgrade-price" id="startFireRatePrice">30</div>
+            <div class="upgrades-list">
+                <div class="upgrade-item">
+                    <div class="upgrade-header">
+                        <div class="upgrade-name">Скорость стрельбы</div>
+                        <div class="upgrade-price" id="startFireRatePrice">30</div>
+                    </div>
+                    <div class="upgrade-info">
+                        <div class="upgrade-level">Уровень: <span id="startFireRateLevel">1</span></div>
+                        <div class="upgrade-desc">-25% задержки</div>
+                    </div>
+                    <button class="upgrade-btn" id="startBuyFireRate">Улучшить</button>
                 </div>
-                <div class="upgrade-level">Уровень: <span id="startFireRateLevel">1</span></div>
-                <button class="upgrade-btn" id="startBuyFireRate">Улучшить</button>
+                
+                <div class="upgrade-item">
+                    <div class="upgrade-header">
+                        <div class="upgrade-name">Сила выстрела</div>
+                        <div class="upgrade-price" id="startDamagePrice">40</div>
+                    </div>
+                    <div class="upgrade-info">
+                        <div class="upgrade-level">Уровень: <span id="startDamageLevel">1</span></div>
+                        <div class="upgrade-desc">+30% урона</div>
+                    </div>
+                    <button class="upgrade-btn" id="startBuyDamage">Улучшить</button>
+                </div>
+                
+                <div class="upgrade-item">
+                    <div class="upgrade-header">
+                        <div class="upgrade-name">Мультивыстрел</div>
+                        <div class="upgrade-price" id="startMultishotPrice">60</div>
+                    </div>
+                    <div class="upgrade-info">
+                        <div class="upgrade-level">Уровень: <span id="startMultishotLevel">1</span></div>
+                        <div class="upgrade-desc">+1 пуля</div>
+                    </div>
+                    <button class="upgrade-btn" id="startBuyMultishot">Улучшить</button>
+                </div>
+                
+                <div class="upgrade-item">
+                    <div class="upgrade-header">
+                        <div class="upgrade-name">Макс. здоровье</div>
+                        <div class="upgrade-price" id="startHealthPrice">50</div>
+                    </div>
+                    <div class="upgrade-info">
+                        <div class="upgrade-level">Уровень: <span id="startHealthLevel">1</span></div>
+                        <div class="upgrade-desc">+15% здоровья</div>
+                    </div>
+                    <button class="upgrade-btn" id="startBuyHealth">Улучшить</button>
+                </div>
             </div>
             
-            <div class="upgrade-item">
-                <div class="upgrade-row">
-                    <div class="upgrade-name">Сила выстрела</div>
-                    <div class="upgrade-price" id="startDamagePrice">40</div>
-                </div>
-                <div class="upgrade-level">Уровень: <span id="startDamageLevel">1</span></div>
-                <button class="upgrade-btn" id="startBuyDamage">Улучшить</button>
+            <div class="action-buttons">
+                <button class="start-game-btn" id="startGameBtn">НАЧАТЬ ИГРУ</button>
             </div>
-            
-            <div class="upgrade-item">
-                <div class="upgrade-row">
-                    <div class="upgrade-name">Мультивыстрел</div>
-                    <div class="upgrade-price" id="startMultishotPrice">60</div>
-                </div>
-                <div class="upgrade-level">Уровень: <span id="startMultishotLevel">1</span></div>
-                <button class="upgrade-btn" id="startBuyMultishot">Улучшить</button>
-            </div>
-            
-            <div class="upgrade-item">
-                <div class="upgrade-row">
-                    <div class="upgrade-name">Макс. здоровье</div>
-                    <div class="upgrade-price" id="startHealthPrice">50</div>
-                </div>
-                <div class="upgrade-level">Уровень: <span id="startHealthLevel">1</span></div>
-                <button class="upgrade-btn" id="startBuyHealth">Улучшить</button>
-            </div>
-            
-            <button class="start-game-btn" id="startGameBtn">НАЧАТЬ ИГРУ</button>
         </div>
     </div>
     
-    <!-- Меню улучшений после игры -->
+    <!-- Меню после игры -->
     <div class="menu-overlay" id="gameOverMenu" style="display: none;">
         <div class="upgrades-content">
             <div class="upgrades-header">
@@ -467,22 +630,22 @@
             </div>
             
             <div class="final-stats">
-                <div>Ваш результат</div>
+                <h3>Ваш результат</h3>
                 <div class="stat-row">
-                    <span>Счет:</span>
-                    <span id="finalScore">0</span>
+                    <span class="stat-label-small">Счет:</span>
+                    <span class="stat-value-small" id="finalScore">0</span>
                 </div>
                 <div class="stat-row">
-                    <span>Волна:</span>
-                    <span id="finalWave">1</span>
+                    <span class="stat-label-small">Волна:</span>
+                    <span class="stat-value-small" id="finalWave">1</span>
                 </div>
                 <div class="stat-row">
-                    <span>Уничтожено:</span>
-                    <span id="finalKills">0</span>
+                    <span class="stat-label-small">Уничтожено:</span>
+                    <span class="stat-value-small" id="finalKills">0</span>
                 </div>
                 <div class="stat-row highlight">
-                    <span>Монеты заработано:</span>
-                    <span id="finalCoinsEarned">0</span>
+                    <span class="stat-label-small">Монеты заработано:</span>
+                    <span class="stat-value-small" id="finalCoinsEarned">0</span>
                 </div>
             </div>
             
@@ -491,43 +654,59 @@
                 <div class="value" id="gameOverCoins">50</div>
             </div>
             
-            <div class="upgrade-item">
-                <div class="upgrade-row">
-                    <div class="upgrade-name">Скорость стрельбы</div>
-                    <div class="upgrade-price" id="gameOverFireRatePrice">30</div>
+            <div class="upgrades-list">
+                <div class="upgrade-item">
+                    <div class="upgrade-header">
+                        <div class="upgrade-name">Скорость стрельбы</div>
+                        <div class="upgrade-price" id="gameOverFireRatePrice">30</div>
+                    </div>
+                    <div class="upgrade-info">
+                        <div class="upgrade-level">Уровень: <span id="gameOverFireRateLevel">1</span></div>
+                        <div class="upgrade-desc">-25% задержки</div>
+                    </div>
+                    <button class="upgrade-btn" id="gameOverBuyFireRate">Улучшить</button>
                 </div>
-                <div class="upgrade-level">Уровень: <span id="gameOverFireRateLevel">1</span></div>
-                <button class="upgrade-btn" id="gameOverBuyFireRate">Улучшить</button>
+                
+                <div class="upgrade-item">
+                    <div class="upgrade-header">
+                        <div class="upgrade-name">Сила выстрела</div>
+                        <div class="upgrade-price" id="gameOverDamagePrice">40</div>
+                    </div>
+                    <div class="upgrade-info">
+                        <div class="upgrade-level">Уровень: <span id="gameOverDamageLevel">1</span></div>
+                        <div class="upgrade-desc">+30% урона</div>
+                    </div>
+                    <button class="upgrade-btn" id="gameOverBuyDamage">Улучшить</button>
+                </div>
+                
+                <div class="upgrade-item">
+                    <div class="upgrade-header">
+                        <div class="upgrade-name">Мультивыстрел</div>
+                        <div class="upgrade-price" id="gameOverMultishotPrice">60</div>
+                    </div>
+                    <div class="upgrade-info">
+                        <div class="upgrade-level">Уровень: <span id="gameOverMultishotLevel">1</span></div>
+                        <div class="upgrade-desc">+1 пуля</div>
+                    </div>
+                    <button class="upgrade-btn" id="gameOverBuyMultishot">Улучшить</button>
+                </div>
+                
+                <div class="upgrade-item">
+                    <div class="upgrade-header">
+                        <div class="upgrade-name">Макс. здоровье</div>
+                        <div class="upgrade-price" id="gameOverHealthPrice">50</div>
+                    </div>
+                    <div class="upgrade-info">
+                        <div class="upgrade-level">Уровень: <span id="gameOverHealthLevel">1</span></div>
+                        <div class="upgrade-desc">+15% здоровья</div>
+                    </div>
+                    <button class="upgrade-btn" id="gameOverBuyHealth">Улучшить</button>
+                </div>
             </div>
             
-            <div class="upgrade-item">
-                <div class="upgrade-row">
-                    <div class="upgrade-name">Сила выстрела</div>
-                    <div class="upgrade-price" id="gameOverDamagePrice">40</div>
-                </div>
-                <div class="upgrade-level">Уровень: <span id="gameOverDamageLevel">1</span></div>
-                <button class="upgrade-btn" id="gameOverBuyDamage">Улучшить</button>
+            <div class="action-buttons">
+                <button class="restart-game-btn" id="restartGameBtn">ИГРАТЬ СНОВА</button>
             </div>
-            
-            <div class="upgrade-item">
-                <div class="upgrade-row">
-                    <div class="upgrade-name">Мультивыстрел</div>
-                    <div class="upgrade-price" id="gameOverMultishotPrice">60</div>
-                </div>
-                <div class="upgrade-level">Уровень: <span id="gameOverMultishotLevel">1</span></div>
-                <button class="upgrade-btn" id="gameOverBuyMultishot">Улучшить</button>
-            </div>
-            
-            <div class="upgrade-item">
-                <div class="upgrade-row">
-                    <div class="upgrade-name">Макс. здоровье</div>
-                    <div class="upgrade-price" id="gameOverHealthPrice">50</div>
-                </div>
-                <div class="upgrade-level">Уровень: <span id="gameOverHealthLevel">1</span></div>
-                <button class="upgrade-btn" id="gameOverBuyHealth">Улучшить</button>
-            </div>
-            
-            <button class="start-game-btn" id="restartGameBtn">ИГРАТЬ СНОВА</button>
         </div>
     </div>
 
@@ -541,11 +720,6 @@
         let frameCount = 0;
         let lastFpsUpdate = 0;
         const fpsCounter = document.getElementById('fpsCounter');
-        
-        // Оптимизация производительности
-        let lastFrameTime = 0;
-        const FPS_LIMIT = 60;
-        const frameInterval = 1000 / FPS_LIMIT;
         
         // Игровые переменные
         const game = {
@@ -585,10 +759,27 @@
             }
         };
         
-        // Создание звездного фона
+        // Границы отрисовки (только видимая область)
+        let renderBounds = {
+            x: 0,
+            y: 0,
+            width: 0,
+            height: 0,
+            padding: 100 // Дополнительная область для плавного появления/исчезновения
+        };
+        
+        // Оптимизация: отрисовываем только видимые объекты
+        function isInViewport(x, y, width, height) {
+            return x + width >= 0 && 
+                   x <= renderBounds.width && 
+                   y + height >= 0 && 
+                   y <= renderBounds.height;
+        }
+        
+        // Создание звездного фона только в видимой области
         function createStars() {
             game.stars = [];
-            const starCount = Math.min(40, Math.floor((canvas.width * canvas.height) / 3000));
+            const starCount = Math.min(30, Math.floor((canvas.width * canvas.height) / 4000));
             
             for (let i = 0; i < starCount; i++) {
                 game.stars.push({
@@ -609,8 +800,10 @@
             ctx.fillStyle = '#ffffff';
             for (let i = 0; i < game.stars.length; i++) {
                 const star = game.stars[i];
-                ctx.globalAlpha = star.brightness;
-                ctx.fillRect(star.x, star.y, star.size, star.size);
+                if (isInViewport(star.x, star.y, star.size, star.size)) {
+                    ctx.globalAlpha = star.brightness;
+                    ctx.fillRect(star.x, star.y, star.size, star.size);
+                }
                 
                 star.y += star.speed;
                 if (star.y > canvas.height) {
@@ -621,27 +814,38 @@
             ctx.globalAlpha = 1;
         }
         
-        // Адаптивный размер canvas
+        // Адаптивный размер canvas для смартфона
         function resizeCanvas() {
-            const dpr = window.devicePixelRatio || 1;
             const width = window.innerWidth;
             const height = window.innerHeight;
             
-            canvas.width = width * dpr;
-            canvas.height = height * dpr;
-            canvas.style.width = width + 'px';
-            canvas.style.height = height + 'px';
+            canvas.width = width;
+            canvas.height = height;
             
-            ctx.scale(dpr, dpr);
+            renderBounds.width = width;
+            renderBounds.height = height;
             
             createStars();
+            
+            // Позиционируем игрока
             if (game.running) {
                 game.player.x = Math.max(0, Math.min(game.player.x, width - game.player.width));
+                game.player.y = height - 150;
+            } else {
+                initPlayer();
             }
         }
         
-        resizeCanvas();
+        // Обработка изменения ориентации
         window.addEventListener('resize', resizeCanvas);
+        window.addEventListener('orientationchange', function() {
+            setTimeout(resizeCanvas, 100);
+        });
+        
+        // Предотвращаем масштабирование на iOS
+        document.addEventListener('gesturestart', function(e) {
+            e.preventDefault();
+        });
         
         // Инициализация игрока
         function initPlayer() {
@@ -649,13 +853,16 @@
             game.player.y = canvas.height - 150;
         }
         
-        // Отрисовка игрока
+        // Отрисовка игрока (только если в видимой области)
         function drawPlayer() {
+            if (!isInViewport(game.player.x, game.player.y, game.player.width, game.player.height)) {
+                return;
+            }
+            
             const p = game.player;
             const centerX = p.x + p.width / 2;
-            const centerY = p.y + p.height / 2;
             
-            // Основной корпус (треугольник)
+            // Основной корпус
             ctx.fillStyle = p.color;
             ctx.beginPath();
             ctx.moveTo(centerX, p.y + 5);
@@ -686,6 +893,8 @@
         }
         
         function drawEngine(x, y, width, height) {
+            if (!isInViewport(x, y, width, height + 15)) return;
+            
             ctx.fillStyle = '#333344';
             ctx.fillRect(x, y, width, height);
             
@@ -744,8 +953,12 @@
         
         // Создание противника
         function createEnemy() {
-            const waveModifier = Math.min(10, game.wave);
-            const size = 25 + Math.random() * 15 + waveModifier * 1.5;
+            const waveModifier = Math.min(15, game.wave);
+            const size = 25 + Math.random() * 15 + waveModifier * 1.2;
+            
+            // Позиция спавна - только в верхней части экрана
+            const spawnX = Math.random() * (canvas.width - size);
+            const spawnY = -size - 10;
             
             let enemyType = 'normal';
             let speedMultiplier = 1;
@@ -777,8 +990,8 @@
             let enemy;
             if (game.objectPool.enemies.length > 0) {
                 enemy = game.objectPool.enemies.pop();
-                enemy.x = Math.random() * (canvas.width - size);
-                enemy.y = -size;
+                enemy.x = spawnX;
+                enemy.y = spawnY;
                 enemy.width = size;
                 enemy.height = size;
                 enemy.speed = (1.2 + waveModifier * 0.15) * speedMultiplier;
@@ -789,8 +1002,8 @@
                 enemy.type = enemyType;
             } else {
                 enemy = {
-                    x: Math.random() * (canvas.width - size),
-                    y: -size,
+                    x: spawnX,
+                    y: spawnY,
                     width: size,
                     height: size,
                     speed: (1.2 + waveModifier * 0.15) * speedMultiplier,
@@ -807,6 +1020,10 @@
         
         // Отрисовка противника с полоской здоровья
         function drawEnemy(enemy) {
+            if (!isInViewport(enemy.x, enemy.y, enemy.width, enemy.height + 10)) {
+                return;
+            }
+            
             // Тело
             ctx.fillStyle = enemy.color;
             ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
@@ -827,7 +1044,7 @@
             
             ctx.fillText(icon, enemy.x + enemy.width / 2, enemy.y + enemy.height / 2 + 4);
             
-            // ПОЛОСКА ЗДОРОВЬЯ НА КАЖДОМ ВРАГЕ
+            // Полоска здоровья
             const healthPercent = enemy.health / enemy.maxHealth;
             const barWidth = enemy.width;
             const barHeight = 3;
@@ -837,7 +1054,7 @@
             ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
             ctx.fillRect(enemy.x, barY, barWidth, barHeight);
             
-            // Заполнение полоски
+            // Заполнение
             if (healthPercent > 0.6) {
                 ctx.fillStyle = '#00ff88';
             } else if (healthPercent > 0.3) {
@@ -847,7 +1064,7 @@
             }
             ctx.fillRect(enemy.x, barY, barWidth * healthPercent, barHeight);
             
-            // Обводка полоски
+            // Обводка
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
             ctx.lineWidth = 1;
             ctx.strokeRect(enemy.x, barY, barWidth, barHeight);
@@ -865,10 +1082,21 @@
         function update(currentTime) {
             if (!game.running) return;
             
-            const deltaTime = Math.min(1, (currentTime - lastFrameTime) / frameInterval);
-            lastFrameTime = currentTime;
+            // Обновление FPS
+            frameCount++;
+            if (currentTime - lastFpsUpdate >= 1000) {
+                fps = Math.min(60, frameCount);
+                frameCount = 0;
+                lastFpsUpdate = currentTime;
+                if (fpsCounter) {
+                    fpsCounter.textContent = `FPS: ${fps}`;
+                    fpsCounter.style.color = fps >= 50 ? 'rgba(0, 255, 136, 0.8)' : 
+                                            fps >= 30 ? 'rgba(255, 204, 0, 0.8)' : 
+                                            'rgba(255, 50, 50, 0.8)';
+                }
+            }
             
-            // ДВИЖЕНИЕ ИГРОКА - исправлено!
+            // Движение игрока
             if (game.isTouching) {
                 game.player.x = game.touchX - game.player.width / 2;
                 game.player.x = Math.max(0, Math.min(game.player.x, canvas.width - game.player.width));
@@ -877,7 +1105,7 @@
             // Автоматическая стрельба
             autoShoot();
             
-            // Обновление таймеров
+            // Обновление волн
             game.waveTimer++;
             game.enemySpawnTimer++;
             
@@ -887,18 +1115,22 @@
                 game.waveTimer = 0;
                 updateDisplay('waveValue', game.wave);
                 
+                // Бонус за волну
                 if (game.wave % 3 === 0) {
-                    game.totalCoins += 5;
-                    game.coinsEarned += 5;
+                    const bonus = 5 + Math.floor(game.wave / 5);
+                    game.totalCoins += bonus;
+                    game.coinsEarned += bonus;
                     updateAllDisplays();
                 }
             }
             
+            // Создание врагов
             const spawnDelay = Math.max(20, 90 - game.wave * 3);
             if (game.enemySpawnTimer > spawnDelay) {
                 createEnemy();
                 game.enemySpawnTimer = 0;
                 
+                // Дополнительные враги на поздних волнах
                 if (game.wave >= 5 && Math.random() < 0.3) {
                     setTimeout(() => createEnemy(), 300);
                 }
@@ -910,14 +1142,16 @@
             // Обновление пуль
             for (let i = game.bullets.length - 1; i >= 0; i--) {
                 const bullet = game.bullets[i];
-                bullet.y -= bullet.speed * deltaTime;
+                bullet.y -= bullet.speed;
                 
+                // Удаляем пули, вышедшие за экран
                 if (bullet.y < -bullet.height) {
                     game.objectPool.bullets.push(game.bullets[i]);
                     game.bullets.splice(i, 1);
                     continue;
                 }
                 
+                // Проверяем столкновения
                 for (let j = game.enemies.length - 1; j >= 0; j--) {
                     const enemy = game.enemies[j];
                     
@@ -960,8 +1194,9 @@
             // Обновление врагов
             for (let i = game.enemies.length - 1; i >= 0; i--) {
                 const enemy = game.enemies[i];
-                enemy.y += enemy.speed * deltaTime;
+                enemy.y += enemy.speed;
                 
+                // Столкновение с игроком
                 if (checkCollision(game.player, enemy)) {
                     let damage = 15;
                     if (enemy.type === 'tank') damage = 25;
@@ -979,7 +1214,8 @@
                     }
                 }
                 
-                if (enemy.y > canvas.height) {
+                // Удаляем врагов, вышедших за нижний край экрана
+                if (enemy.y > canvas.height + 50) {
                     game.objectPool.enemies.push(game.enemies[i]);
                     game.enemies.splice(i, 1);
                 }
@@ -989,19 +1225,23 @@
         // Отрисовка игры
         function draw() {
             drawStars();
-            drawPlayer();
             
-            // Пули
+            // Пули (только видимые)
             for (let i = 0; i < game.bullets.length; i++) {
                 const bullet = game.bullets[i];
-                ctx.fillStyle = bullet.color;
-                ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+                if (isInViewport(bullet.x, bullet.y, bullet.width, bullet.height)) {
+                    ctx.fillStyle = bullet.color;
+                    ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+                }
             }
             
-            // Враги
+            // Враги (только видимые)
             for (let i = 0; i < game.enemies.length; i++) {
                 drawEnemy(game.enemies[i]);
             }
+            
+            // Игрок
+            drawPlayer();
         }
         
         // Обновление отображений
@@ -1123,6 +1363,7 @@
         function gameOver() {
             game.running = false;
             
+            // Бонус за высокую волну
             if (game.wave >= 5) {
                 const bonus = Math.floor(game.wave / 2);
                 game.totalCoins += bonus;
@@ -1153,27 +1394,13 @@
             updateAllDisplays();
             updateHealthDisplay();
             
+            // Скрываем меню
             document.getElementById('startMenu').style.display = 'none';
             document.getElementById('gameOverMenu').style.display = 'none';
         }
         
         // Игровой цикл
         function gameLoop(currentTime) {
-            frameCount++;
-            
-            // Обновление FPS счетчика
-            if (currentTime - lastFpsUpdate >= 1000) {
-                fps = frameCount;
-                frameCount = 0;
-                lastFpsUpdate = currentTime;
-                if (fpsCounter) {
-                    fpsCounter.textContent = `FPS: ${fps}`;
-                    fpsCounter.style.color = fps >= 50 ? 'rgba(0, 255, 136, 0.8)' : 
-                                            fps >= 30 ? 'rgba(255, 204, 0, 0.8)' : 
-                                            'rgba(255, 50, 50, 0.8)';
-                }
-            }
-            
             update(currentTime);
             draw();
             if (game.running) {
@@ -1181,17 +1408,15 @@
             }
         }
         
-        // НАСТРОЙКА УПРАВЛЕНИЯ - исправлено!
+        // Управление для смартфона
         function setupTouchControls() {
             // Сенсорное управление
             canvas.addEventListener('touchstart', (e) => {
                 e.preventDefault();
                 const touch = e.touches[0];
                 const rect = canvas.getBoundingClientRect();
-                const scaleX = canvas.width / canvas.offsetWidth;
-                const scaleY = canvas.height / canvas.offsetHeight;
                 
-                game.touchX = (touch.clientX - rect.left) * scaleX;
+                game.touchX = (touch.clientX - rect.left) * (canvas.width / canvas.offsetWidth);
                 game.isTouching = true;
             }, { passive: false });
             
@@ -1201,9 +1426,8 @@
                 
                 const touch = e.touches[0];
                 const rect = canvas.getBoundingClientRect();
-                const scaleX = canvas.width / canvas.offsetWidth;
                 
-                game.touchX = (touch.clientX - rect.left) * scaleX;
+                game.touchX = (touch.clientX - rect.left) * (canvas.width / canvas.offsetWidth);
             }, { passive: false });
             
             canvas.addEventListener('touchend', (e) => {
@@ -1214,9 +1438,7 @@
             // Управление мышью для тестирования
             canvas.addEventListener('mousedown', (e) => {
                 const rect = canvas.getBoundingClientRect();
-                const scaleX = canvas.width / canvas.offsetWidth;
-                
-                game.touchX = (e.clientX - rect.left) * scaleX;
+                game.touchX = (e.clientX - rect.left) * (canvas.width / canvas.offsetWidth);
                 game.isTouching = true;
             });
             
@@ -1224,16 +1446,10 @@
                 if (!game.running || !game.isTouching) return;
                 
                 const rect = canvas.getBoundingClientRect();
-                const scaleX = canvas.width / canvas.offsetWidth;
-                
-                game.touchX = (e.clientX - rect.left) * scaleX;
+                game.touchX = (e.clientX - rect.left) * (canvas.width / canvas.offsetWidth);
             });
             
             canvas.addEventListener('mouseup', () => {
-                game.isTouching = false;
-            });
-            
-            canvas.addEventListener('mouseleave', () => {
                 game.isTouching = false;
             });
         }
@@ -1287,15 +1503,19 @@
             
             document.getElementById('startMenu').style.display = 'flex';
             
+            // Фоновый рендеринг
             function drawBackground() {
-                drawStars();
+                if (!game.running) {
+                    drawStars();
+                    drawPlayer();
+                }
                 requestAnimationFrame(drawBackground);
             }
             drawBackground();
         }
         
         // Запуск
-        init();
+        document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>
