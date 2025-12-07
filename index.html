@@ -339,6 +339,26 @@
             transform: scale(0.98);
         }
         
+        /* Кнопка сброса прогресса */
+        .reset-progress-btn {
+            background: linear-gradient(135deg, rgba(255, 50, 50, 0.3), rgba(200, 0, 0, 0.3));
+            border: 1px solid rgba(255, 50, 50, 0.6);
+            color: #ff8888;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+            margin-top: 8px;
+        }
+        
+        .reset-progress-btn:active {
+            background: linear-gradient(135deg, rgba(255, 50, 50, 0.5), rgba(200, 0, 0, 0.5));
+            transform: scale(0.98);
+        }
+        
         /* Статистика */
         .final-stats {
             background: rgba(0, 25, 50, 0.7);
@@ -557,7 +577,7 @@
         <div class="upgrades-content">
             <div class="upgrades-header">
                 <h1>КОСМИЧЕСКИЙ СТРЕЛОК</h1>
-                <p>Улучшите корабль перед началом</p>
+                <p>Прогресс сохранен автоматически</p>
             </div>
             
             <div class="coins-display">
@@ -597,7 +617,7 @@
                     </div>
                     <div class="upgrade-info">
                         <div class="upgrade-level">Уровень: <span id="startMultishotLevel">1</span></div>
-                        <div class="upgrade-desc">+1 пуля</div>
+                        <div class="upgrade-desc">+1 пуля, +20% ширины</div>
                     </div>
                     <button class="upgrade-btn" id="startBuyMultishot">Улучшить</button>
                 </div>
@@ -617,6 +637,7 @@
             
             <div class="action-buttons">
                 <button class="start-game-btn" id="startGameBtn">НАЧАТЬ ИГРУ</button>
+                <button class="reset-progress-btn" id="resetProgressBtn">СБРОСИТЬ ПРОГРЕСС</button>
             </div>
         </div>
     </div>
@@ -686,7 +707,7 @@
                     </div>
                     <div class="upgrade-info">
                         <div class="upgrade-level">Уровень: <span id="gameOverMultishotLevel">1</span></div>
-                        <div class="upgrade-desc">+1 пуля</div>
+                        <div class="upgrade-desc">+1 пуля, +20% ширины</div>
                     </div>
                     <button class="upgrade-btn" id="gameOverBuyMultishot">Улучшить</button>
                 </div>
@@ -706,6 +727,7 @@
             
             <div class="action-buttons">
                 <button class="restart-game-btn" id="restartGameBtn">ИГРАТЬ СНОВА</button>
+                <button class="reset-progress-btn" id="resetProgressBtnGameOver">СБРОСИТЬ ПРОГРЕСС</button>
             </div>
         </div>
     </div>
@@ -715,11 +737,26 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d', { alpha: false });
         
+        // Ключ для LocalStorage
+        const SAVE_KEY = 'space_shooter_save';
+        
         // FPS счетчик
         let fps = 60;
         let frameCount = 0;
         let lastFpsUpdate = 0;
         const fpsCounter = document.getElementById('fpsCounter');
+        
+        // Стандартные значения для сброса
+        const DEFAULT_GAME_STATE = {
+            totalCoins: 50,
+            upgrades: {
+                fireRate: { level: 1, cost: 30, value: 400 },
+                damage: { level: 1, cost: 40, value: 10 },
+                multishot: { level: 1, cost: 60, value: 1 },
+                health: { level: 1, cost: 50, value: 100 }
+            },
+            maxHealth: 100
+        };
         
         // Игровые переменные
         const game = {
@@ -734,10 +771,18 @@
             player: {
                 x: 0,
                 y: 0,
-                width: 40,
-                height: 60,
+                baseWidth: 60,
+                baseHeight: 60,
+                currentWidth: 60,
+                currentHeight: 60,
                 speed: 8,
-                color: '#00a8ff'
+                color: '#00a8ff',
+                hitbox: {
+                    x: 0,
+                    y: 0,
+                    width: 60,
+                    height: 60
+                }
             },
             bullets: [],
             enemies: [],
@@ -759,35 +804,141 @@
             }
         };
         
-        // Границы отрисовки (только видимая область)
-        let renderBounds = {
-            x: 0,
-            y: 0,
-            width: 0,
-            height: 0,
-            padding: 100 // Дополнительная область для плавного появления/исчезновения
-        };
+        // Функции для работы с LocalStorage
         
-        // Оптимизация: отрисовываем только видимые объекты
-        function isInViewport(x, y, width, height) {
-            return x + width >= 0 && 
-                   x <= renderBounds.width && 
-                   y + height >= 0 && 
-                   y <= renderBounds.height;
+        // Сохранение прогресса
+        function saveGame() {
+            try {
+                const saveData = {
+                    totalCoins: game.totalCoins,
+                    upgrades: {
+                        fireRate: { ...game.upgrades.fireRate },
+                        damage: { ...game.upgrades.damage },
+                        multishot: { ...game.upgrades.multishot },
+                        health: { ...game.upgrades.health }
+                    },
+                    maxHealth: game.maxHealth,
+                    saveTime: Date.now(),
+                    version: '1.0'
+                };
+                
+                localStorage.setItem(SAVE_KEY, JSON.stringify(saveData));
+                console.log('Игра сохранена');
+            } catch (e) {
+                console.error('Ошибка при сохранении игры:', e);
+            }
         }
         
-        // Создание звездного фона только в видимой области
+        // Загрузка прогресса
+        function loadGame() {
+            try {
+                const savedData = localStorage.getItem(SAVE_KEY);
+                
+                if (savedData) {
+                    const parsedData = JSON.parse(savedData);
+                    
+                    // Проверяем версию сохранения
+                    if (parsedData.version === '1.0') {
+                        // Загружаем монеты
+                        game.totalCoins = parsedData.totalCoins || DEFAULT_GAME_STATE.totalCoins;
+                        
+                        // Загружаем улучшения
+                        if (parsedData.upgrades) {
+                            if (parsedData.upgrades.fireRate) {
+                                game.upgrades.fireRate.level = parsedData.upgrades.fireRate.level || 1;
+                                game.upgrades.fireRate.cost = parsedData.upgrades.fireRate.cost || 30;
+                                game.upgrades.fireRate.value = parsedData.upgrades.fireRate.value || 400;
+                            }
+                            
+                            if (parsedData.upgrades.damage) {
+                                game.upgrades.damage.level = parsedData.upgrades.damage.level || 1;
+                                game.upgrades.damage.cost = parsedData.upgrades.damage.cost || 40;
+                                game.upgrades.damage.value = parsedData.upgrades.damage.value || 10;
+                            }
+                            
+                            if (parsedData.upgrades.multishot) {
+                                game.upgrades.multishot.level = parsedData.upgrades.multishot.level || 1;
+                                game.upgrades.multishot.cost = parsedData.upgrades.multishot.cost || 60;
+                                game.upgrades.multishot.value = parsedData.upgrades.multishot.value || 1;
+                            }
+                            
+                            if (parsedData.upgrades.health) {
+                                game.upgrades.health.level = parsedData.upgrades.health.level || 1;
+                                game.upgrades.health.cost = parsedData.upgrades.health.cost || 50;
+                                game.upgrades.health.value = parsedData.upgrades.health.value || 100;
+                            }
+                        }
+                        
+                        // Загружаем максимальное здоровье
+                        game.maxHealth = parsedData.maxHealth || DEFAULT_GAME_STATE.maxHealth;
+                        game.playerHealth = game.maxHealth;
+                        
+                        console.log('Игра загружена');
+                        return true;
+                    }
+                }
+            } catch (e) {
+                console.error('Ошибка при загрузке игры:', e);
+            }
+            
+            // Если сохранение не найдено или произошла ошибка
+            resetToDefault();
+            console.log('Создано новое сохранение');
+            return false;
+        }
+        
+        // Сброс прогресса
+        function resetProgress() {
+            if (confirm('Вы уверены, что хотите сбросить весь прогресс?\nВсе улучшения и монеты будут потеряны.')) {
+                resetToDefault();
+                saveGame(); // Сохраняем сброшенное состояние
+                updateAllDisplays();
+                updateHealthDisplay();
+                alert('Прогресс сброшен!');
+            }
+        }
+        
+        // Сброс к значениям по умолчанию
+        function resetToDefault() {
+            game.totalCoins = DEFAULT_GAME_STATE.totalCoins;
+            game.upgrades.fireRate = { ...DEFAULT_GAME_STATE.upgrades.fireRate };
+            game.upgrades.damage = { ...DEFAULT_GAME_STATE.upgrades.damage };
+            game.upgrades.multishot = { ...DEFAULT_GAME_STATE.upgrades.multishot };
+            game.upgrades.health = { ...DEFAULT_GAME_STATE.upgrades.health };
+            game.maxHealth = DEFAULT_GAME_STATE.maxHealth;
+            game.playerHealth = game.maxHealth;
+            
+            // Обновляем ширину корабля
+            updatePlayerWidth();
+        }
+        
+        // Функция для обновления ширины корабля и его хитбокса
+        function updatePlayerWidth() {
+            const widthMultiplier = 1 + (game.upgrades.multishot.level - 1) * 0.2;
+            game.player.currentWidth = Math.round(game.player.baseWidth * widthMultiplier);
+            game.player.currentHeight = game.player.baseHeight;
+            
+            game.player.hitbox.width = game.player.currentWidth * 0.8;
+            game.player.hitbox.height = game.player.currentHeight * 0.7;
+            
+            if (game.running) {
+                game.player.x = Math.max(0, Math.min(game.player.x, canvas.width - game.player.currentWidth));
+            }
+        }
+        
+        // Создание звездного фона
         function createStars() {
             game.stars = [];
-            const starCount = Math.min(30, Math.floor((canvas.width * canvas.height) / 4000));
+            const starCount = Math.min(60, Math.floor((canvas.width * canvas.height) / 5000));
             
             for (let i = 0; i < starCount; i++) {
                 game.stars.push({
                     x: Math.random() * canvas.width,
                     y: Math.random() * canvas.height,
-                    size: Math.random() * 1 + 0.2,
-                    brightness: Math.random() * 0.3 + 0.1,
-                    speed: Math.random() * 0.2 + 0.05
+                    size: Math.random() * 1.5 + 0.5,
+                    brightness: Math.random() * 0.2 + 0.1,
+                    speed: Math.random() * 0.1 + 0.05,
+                    twinkle: Math.random() * 0.15 + 0.05
                 });
             }
         }
@@ -800,10 +951,13 @@
             ctx.fillStyle = '#ffffff';
             for (let i = 0; i < game.stars.length; i++) {
                 const star = game.stars[i];
-                if (isInViewport(star.x, star.y, star.size, star.size)) {
-                    ctx.globalAlpha = star.brightness;
-                    ctx.fillRect(star.x, star.y, star.size, star.size);
-                }
+                
+                const currentBrightness = star.brightness + Math.sin(Date.now() * 0.001 + i) * star.twinkle;
+                
+                ctx.globalAlpha = Math.max(0.05, Math.min(0.3, currentBrightness));
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                ctx.fill();
                 
                 star.y += star.speed;
                 if (star.y > canvas.height) {
@@ -814,7 +968,7 @@
             ctx.globalAlpha = 1;
         }
         
-        // Адаптивный размер canvas для смартфона
+        // Адаптивный размер canvas
         function resizeCanvas() {
             const width = window.innerWidth;
             const height = window.innerHeight;
@@ -822,14 +976,10 @@
             canvas.width = width;
             canvas.height = height;
             
-            renderBounds.width = width;
-            renderBounds.height = height;
-            
             createStars();
             
-            // Позиционируем игрока
             if (game.running) {
-                game.player.x = Math.max(0, Math.min(game.player.x, width - game.player.width));
+                game.player.x = Math.max(0, Math.min(game.player.x, width - game.player.currentWidth));
                 game.player.y = height - 150;
             } else {
                 initPlayer();
@@ -849,59 +999,71 @@
         
         // Инициализация игрока
         function initPlayer() {
-            game.player.x = canvas.width / 2 - game.player.width / 2;
+            game.player.x = canvas.width / 2 - game.player.currentWidth / 2;
             game.player.y = canvas.height - 150;
+            updatePlayerHitbox();
         }
         
-        // Отрисовка игрока (только если в видимой области)
+        // Обновление позиции хитбокса игрока
+        function updatePlayerHitbox() {
+            game.player.hitbox.x = game.player.x + (game.player.currentWidth - game.player.hitbox.width) / 2;
+            game.player.hitbox.y = game.player.y + (game.player.currentHeight - game.player.hitbox.height) / 2 - 5;
+        }
+        
+        // Отрисовка игрока
         function drawPlayer() {
-            if (!isInViewport(game.player.x, game.player.y, game.player.width, game.player.height)) {
-                return;
-            }
-            
             const p = game.player;
-            const centerX = p.x + p.width / 2;
+            updatePlayerHitbox();
             
-            // Основной корпус
+            const cornerRadius = 10;
+            
+            // Внешний контур
             ctx.fillStyle = p.color;
             ctx.beginPath();
-            ctx.moveTo(centerX, p.y + 5);
-            ctx.lineTo(p.x + 3, p.y + p.height - 10);
-            ctx.lineTo(p.x + p.width - 3, p.y + p.height - 10);
-            ctx.closePath();
+            ctx.roundRect(p.x, p.y, p.currentWidth, p.currentHeight, cornerRadius);
             ctx.fill();
             
-            // Центральная часть
+            // Внутренняя часть
             ctx.fillStyle = '#0066cc';
             ctx.beginPath();
-            ctx.moveTo(centerX, p.y + 10);
-            ctx.lineTo(p.x + 6, p.y + p.height - 12);
-            ctx.lineTo(p.x + p.width - 6, p.y + p.height - 12);
-            ctx.closePath();
+            ctx.roundRect(p.x + 3, p.y + 3, p.currentWidth - 6, p.currentHeight - 6, cornerRadius - 2);
             ctx.fill();
             
             // Кабина
+            const cabinX = p.x + p.currentWidth / 2;
+            const cabinY = p.y + p.currentHeight * 0.3;
+            const cabinRadius = p.currentWidth * 0.15;
+            
             ctx.fillStyle = 'rgba(180, 230, 255, 0.9)';
             ctx.beginPath();
-            ctx.arc(centerX, p.y + 18, 6, 0, Math.PI * 2);
+            ctx.arc(cabinX, cabinY, cabinRadius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Стекло кабины
+            ctx.fillStyle = 'rgba(220, 240, 255, 0.6)';
+            ctx.beginPath();
+            ctx.arc(cabinX, cabinY, cabinRadius - 2, 0, Math.PI * 2);
             ctx.fill();
             
             // Двигатели
-            const engineY = p.y + p.height - 8;
-            drawEngine(p.x + 8, engineY, 8, 15);
-            drawEngine(p.x + p.width - 16, engineY, 8, 15);
+            const engineWidth = p.currentWidth * 0.15;
+            const engineHeight = p.currentHeight * 0.25;
+            const engineY = p.y + p.currentHeight - engineHeight + 5;
+            
+            drawEngine(p.x + p.currentWidth * 0.2, engineY, engineWidth, engineHeight);
+            drawEngine(p.x + p.currentWidth * 0.8 - engineWidth, engineY, engineWidth, engineHeight);
         }
         
         function drawEngine(x, y, width, height) {
-            if (!isInViewport(x, y, width, height + 15)) return;
-            
             ctx.fillStyle = '#333344';
-            ctx.fillRect(x, y, width, height);
+            ctx.beginPath();
+            ctx.roundRect(x, y, width, height, width / 4);
+            ctx.fill();
             
             const flameHeight = 12 + Math.sin(Date.now() / 100) * 4;
             const gradient = ctx.createLinearGradient(x, y + height, x, y + height + flameHeight);
-            gradient.addColorStop(0, '#ff5500');
-            gradient.addColorStop(0.5, '#ff9900');
+            gradient.addColorStop(0, 'rgba(255, 85, 0, 0.8)');
+            gradient.addColorStop(0.5, 'rgba(255, 153, 0, 0.6)');
             gradient.addColorStop(1, 'transparent');
             
             ctx.fillStyle = gradient;
@@ -911,6 +1073,27 @@
             ctx.lineTo(x + width / 2, y + height + flameHeight);
             ctx.closePath();
             ctx.fill();
+        }
+        
+        // Функция для рисования скругленных прямоугольников
+        if (!ctx.roundRect) {
+            ctx.roundRect = function(x, y, width, height, radius) {
+                if (width < 2 * radius) radius = width / 2;
+                if (height < 2 * radius) radius = height / 2;
+                
+                this.beginPath();
+                this.moveTo(x + radius, y);
+                this.lineTo(x + width - radius, y);
+                this.quadraticCurveTo(x + width, y, x + width, y + radius);
+                this.lineTo(x + width, y + height - radius);
+                this.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+                this.lineTo(x + radius, y + height);
+                this.quadraticCurveTo(x, y + height, x, y + height - radius);
+                this.lineTo(x, y + radius);
+                this.quadraticCurveTo(x, y, x + radius, y);
+                this.closePath();
+                return this;
+            }
         }
         
         // Автоматическая стрельба
@@ -926,19 +1109,19 @@
             for (let i = 0; i < bulletCount; i++) {
                 let offsetX = 0;
                 if (bulletCount > 1) {
-                    offsetX = (i - (bulletCount - 1) / 2) * 8;
+                    offsetX = (i - (bulletCount - 1) / 2) * (game.player.currentWidth / (bulletCount + 1));
                 }
                 
                 let bullet;
                 if (game.objectPool.bullets.length > 0) {
                     bullet = game.objectPool.bullets.pop();
-                    bullet.x = game.player.x + game.player.width / 2 - 2 + offsetX;
+                    bullet.x = game.player.x + game.player.currentWidth / 2 - 2 + offsetX;
                     bullet.y = game.player.y + 5;
                     bullet.damage = game.upgrades.damage.value;
                     bullet.color = bulletCount > 1 ? '#00ff88' : '#00a8ff';
                 } else {
                     bullet = {
-                        x: game.player.x + game.player.width / 2 - 2 + offsetX,
+                        x: game.player.x + game.player.currentWidth / 2 - 2 + offsetX,
                         y: game.player.y + 5,
                         width: 4,
                         height: 12,
@@ -955,10 +1138,6 @@
         function createEnemy() {
             const waveModifier = Math.min(15, game.wave);
             const size = 25 + Math.random() * 15 + waveModifier * 1.2;
-            
-            // Позиция спавна - только в верхней части экрана
-            const spawnX = Math.random() * (canvas.width - size);
-            const spawnY = -size - 10;
             
             let enemyType = 'normal';
             let speedMultiplier = 1;
@@ -990,8 +1169,8 @@
             let enemy;
             if (game.objectPool.enemies.length > 0) {
                 enemy = game.objectPool.enemies.pop();
-                enemy.x = spawnX;
-                enemy.y = spawnY;
+                enemy.x = Math.random() * (canvas.width - size);
+                enemy.y = -size - 10;
                 enemy.width = size;
                 enemy.height = size;
                 enemy.speed = (1.2 + waveModifier * 0.15) * speedMultiplier;
@@ -1000,10 +1179,16 @@
                 enemy.color = colors[enemyType];
                 enemy.value = 3 + Math.floor(waveModifier / 2) * (enemyType === 'boss' ? 3 : enemyType === 'tank' ? 2 : 1);
                 enemy.type = enemyType;
+                enemy.hitbox = {
+                    x: enemy.x,
+                    y: enemy.y,
+                    width: enemy.width,
+                    height: enemy.height
+                };
             } else {
                 enemy = {
-                    x: spawnX,
-                    y: spawnY,
+                    x: Math.random() * (canvas.width - size),
+                    y: -size - 10,
                     width: size,
                     height: size,
                     speed: (1.2 + waveModifier * 0.15) * speedMultiplier,
@@ -1011,38 +1196,55 @@
                     maxHealth: health,
                     color: colors[enemyType],
                     value: 3 + Math.floor(waveModifier / 2) * (enemyType === 'boss' ? 3 : enemyType === 'tank' ? 2 : 1),
-                    type: enemyType
+                    type: enemyType,
+                    hitbox: {
+                        x: 0,
+                        y: 0,
+                        width: size,
+                        height: size
+                    }
                 };
+                updateEnemyHitbox(enemy);
             }
             
             game.enemies.push(enemy);
         }
         
-        // Отрисовка противника с полоской здоровья
+        // Обновление хитбокса врага
+        function updateEnemyHitbox(enemy) {
+            enemy.hitbox.x = enemy.x;
+            enemy.hitbox.y = enemy.y;
+            enemy.hitbox.width = enemy.width;
+            enemy.hitbox.height = enemy.height;
+        }
+        
+        // Отрисовка противника
         function drawEnemy(enemy) {
-            if (!isInViewport(enemy.x, enemy.y, enemy.width, enemy.height + 10)) {
-                return;
-            }
+            updateEnemyHitbox(enemy);
             
-            // Тело
+            const cornerRadius = 8;
+            
             ctx.fillStyle = enemy.color;
-            ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+            ctx.beginPath();
+            ctx.roundRect(enemy.x, enemy.y, enemy.width, enemy.height, cornerRadius);
+            ctx.fill();
             
-            // Детали
             ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-            ctx.fillRect(enemy.x + 3, enemy.y + 3, enemy.width - 6, enemy.height - 6);
+            ctx.beginPath();
+            ctx.roundRect(enemy.x + 3, enemy.y + 3, enemy.width - 6, enemy.height - 6, cornerRadius - 2);
+            ctx.fill();
             
-            // Иконка типа
             ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 9px Arial';
+            ctx.font = 'bold 10px Arial';
             ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
             
             let icon = '●';
             if (enemy.type === 'fast') icon = '⚡';
             else if (enemy.type === 'tank') icon = '🛡️';
             else if (enemy.type === 'boss') icon = '👑';
             
-            ctx.fillText(icon, enemy.x + enemy.width / 2, enemy.y + enemy.height / 2 + 4);
+            ctx.fillText(icon, enemy.x + enemy.width / 2, enemy.y + enemy.height / 2);
             
             // Полоска здоровья
             const healthPercent = enemy.health / enemy.maxHealth;
@@ -1050,11 +1252,9 @@
             const barHeight = 3;
             const barY = enemy.y - barHeight - 2;
             
-            // Фон полоски
             ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
             ctx.fillRect(enemy.x, barY, barWidth, barHeight);
             
-            // Заполнение
             if (healthPercent > 0.6) {
                 ctx.fillStyle = '#00ff88';
             } else if (healthPercent > 0.3) {
@@ -1063,14 +1263,9 @@
                 ctx.fillStyle = '#ff5555';
             }
             ctx.fillRect(enemy.x, barY, barWidth * healthPercent, barHeight);
-            
-            // Обводка
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-            ctx.lineWidth = 1;
-            ctx.strokeRect(enemy.x, barY, barWidth, barHeight);
         }
         
-        // Проверка столкновений
+        // Простая проверка столкновений прямоугольников
         function checkCollision(rect1, rect2) {
             return !(rect1.x > rect2.x + rect2.width || 
                     rect1.x + rect1.width < rect2.x || 
@@ -1098,8 +1293,9 @@
             
             // Движение игрока
             if (game.isTouching) {
-                game.player.x = game.touchX - game.player.width / 2;
-                game.player.x = Math.max(0, Math.min(game.player.x, canvas.width - game.player.width));
+                game.player.x = game.touchX - game.player.currentWidth / 2;
+                game.player.x = Math.max(0, Math.min(game.player.x, canvas.width - game.player.currentWidth));
+                updatePlayerHitbox();
             }
             
             // Автоматическая стрельба
@@ -1115,7 +1311,6 @@
                 game.waveTimer = 0;
                 updateDisplay('waveValue', game.wave);
                 
-                // Бонус за волну
                 if (game.wave % 3 === 0) {
                     const bonus = 5 + Math.floor(game.wave / 5);
                     game.totalCoins += bonus;
@@ -1130,7 +1325,6 @@
                 createEnemy();
                 game.enemySpawnTimer = 0;
                 
-                // Дополнительные враги на поздних волнах
                 if (game.wave >= 5 && Math.random() < 0.3) {
                     setTimeout(() => createEnemy(), 300);
                 }
@@ -1144,18 +1338,16 @@
                 const bullet = game.bullets[i];
                 bullet.y -= bullet.speed;
                 
-                // Удаляем пули, вышедшие за экран
                 if (bullet.y < -bullet.height) {
                     game.objectPool.bullets.push(game.bullets[i]);
                     game.bullets.splice(i, 1);
                     continue;
                 }
                 
-                // Проверяем столкновения
                 for (let j = game.enemies.length - 1; j >= 0; j--) {
                     const enemy = game.enemies[j];
                     
-                    if (checkCollision(bullet, enemy)) {
+                    if (checkCollision(bullet, enemy.hitbox)) {
                         enemy.health -= bullet.damage;
                         
                         game.objectPool.bullets.push(game.bullets[i]);
@@ -1182,6 +1374,7 @@
                             game.kills++;
                             
                             updateAllDisplays();
+                            saveGame(); // Сохраняем после получения монет
                             
                             game.objectPool.enemies.push(game.enemies[j]);
                             game.enemies.splice(j, 1);
@@ -1191,19 +1384,21 @@
                 }
             }
             
-            // Обновление врагов
+            // Обновление врагов и проверка столкновений с игроком
             for (let i = game.enemies.length - 1; i >= 0; i--) {
                 const enemy = game.enemies[i];
                 enemy.y += enemy.speed;
+                updateEnemyHitbox(enemy);
                 
-                // Столкновение с игроком
-                if (checkCollision(game.player, enemy)) {
+                if (checkCollision(game.player.hitbox, enemy.hitbox)) {
                     let damage = 15;
                     if (enemy.type === 'tank') damage = 25;
                     if (enemy.type === 'boss') damage = 35;
                     
                     game.playerHealth -= damage;
                     updateHealthDisplay();
+                    
+                    createCollisionEffect(enemy.x + enemy.width/2, enemy.y + enemy.height/2);
                     
                     game.objectPool.enemies.push(game.enemies[i]);
                     game.enemies.splice(i, 1);
@@ -1214,7 +1409,6 @@
                     }
                 }
                 
-                // Удаляем врагов, вышедших за нижний край экрана
                 if (enemy.y > canvas.height + 50) {
                     game.objectPool.enemies.push(game.enemies[i]);
                     game.enemies.splice(i, 1);
@@ -1222,20 +1416,31 @@
             }
         }
         
+        // Создание эффекта столкновения
+        function createCollisionEffect(x, y) {
+            ctx.fillStyle = 'rgba(255, 100, 100, 0.7)';
+            ctx.beginPath();
+            ctx.arc(x, y, 20, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
         // Отрисовка игры
         function draw() {
             drawStars();
             
-            // Пули (только видимые)
+            // Пули
             for (let i = 0; i < game.bullets.length; i++) {
                 const bullet = game.bullets[i];
-                if (isInViewport(bullet.x, bullet.y, bullet.width, bullet.height)) {
-                    ctx.fillStyle = bullet.color;
-                    ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
-                }
+                ctx.fillStyle = bullet.color;
+                ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+                
+                ctx.shadowColor = bullet.color;
+                ctx.shadowBlur = 5;
+                ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+                ctx.shadowBlur = 0;
             }
             
-            // Враги (только видимые)
+            // Враги
             for (let i = 0; i < game.enemies.length; i++) {
                 drawEnemy(game.enemies[i]);
             }
@@ -1345,6 +1550,8 @@
                         upgrade.value++;
                         upgrade.level++;
                         upgrade.cost = Math.floor(upgrade.cost * (1.8 + upgrade.level * 0.15));
+                        updatePlayerWidth();
+                        updatePlayerHitbox();
                         break;
                     case 'health':
                         game.maxHealth = Math.floor(game.maxHealth * 1.15);
@@ -1356,6 +1563,7 @@
                 
                 updateAllDisplays();
                 updateHealthDisplay();
+                saveGame(); // Сохраняем после покупки улучшения
             }
         }
         
@@ -1363,12 +1571,13 @@
         function gameOver() {
             game.running = false;
             
-            // Бонус за высокую волну
             if (game.wave >= 5) {
                 const bonus = Math.floor(game.wave / 2);
                 game.totalCoins += bonus;
                 game.coinsEarned += bonus;
             }
+            
+            saveGame(); // Сохраняем при завершении игры
             
             const gameOverMenu = document.getElementById('gameOverMenu');
             if (gameOverMenu) {
@@ -1390,11 +1599,11 @@
             game.waveTimer = 0;
             game.enemySpawnTimer = 0;
             
+            updatePlayerWidth();
             initPlayer();
             updateAllDisplays();
             updateHealthDisplay();
             
-            // Скрываем меню
             document.getElementById('startMenu').style.display = 'none';
             document.getElementById('gameOverMenu').style.display = 'none';
         }
@@ -1410,7 +1619,6 @@
         
         // Управление для смартфона
         function setupTouchControls() {
-            // Сенсорное управление
             canvas.addEventListener('touchstart', (e) => {
                 e.preventDefault();
                 const touch = e.touches[0];
@@ -1435,7 +1643,6 @@
                 game.isTouching = false;
             }, { passive: false });
             
-            // Управление мышью для тестирования
             canvas.addEventListener('mousedown', (e) => {
                 const rect = canvas.getBoundingClientRect();
                 game.touchX = (e.clientX - rect.left) * (canvas.width / canvas.offsetWidth);
@@ -1472,6 +1679,18 @@
                 };
             }
             
+            // Кнопки сброса прогресса
+            const resetBtn1 = document.getElementById('resetProgressBtn');
+            const resetBtn2 = document.getElementById('resetProgressBtnGameOver');
+            
+            if (resetBtn1) {
+                resetBtn1.onclick = resetProgress;
+            }
+            if (resetBtn2) {
+                resetBtn2.onclick = resetProgress;
+            }
+            
+            // Кнопки улучшений
             const setupUpgradeButton = (buttonId, type) => {
                 const button = document.getElementById(buttonId);
                 if (button) {
@@ -1494,7 +1713,11 @@
         
         // Инициализация
         function init() {
+            // Загружаем сохранение
+            loadGame();
+            
             resizeCanvas();
+            updatePlayerWidth();
             initPlayer();
             setupTouchControls();
             setupButtons();
@@ -1502,6 +1725,9 @@
             updateHealthDisplay();
             
             document.getElementById('startMenu').style.display = 'flex';
+            
+            // Автосохранение при закрытии страницы
+            window.addEventListener('beforeunload', saveGame);
             
             // Фоновый рендеринг
             function drawBackground() {
