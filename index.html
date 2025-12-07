@@ -70,54 +70,10 @@
             backdrop-filter: blur(2px);
         }
         
-        /* Статус бар - прикреплен к верхней безопасной зоне */
-        .stats-bar {
-            position: fixed;
-            top: env(safe-area-inset-top, 10px);
-            left: 8px;
-            right: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(0, 0, 0, 0.85);
-            padding: 6px 10px;
-            border-radius: 8px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(0, 168, 255, 0.4);
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-            z-index: 100;
-            gap: 4px;
-        }
-        
-        .stat-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            flex: 1;
-            min-width: 0;
-        }
-        
-        .stat-value {
-            font-size: 14px;
-            font-weight: 700;
-            color: #00ff88;
-            text-shadow: 0 0 3px rgba(0, 255, 136, 0.5);
-            line-height: 1.1;
-        }
-        
-        .stat-label {
-            font-size: 8px;
-            color: #88aaff;
-            margin-top: 1px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            opacity: 0.9;
-        }
-        
-        /* Здоровье корабля - прикреплено к нижней безопасной зоне */
+        /* Здоровье корабля - прикреплено к верхней безопасной зоне */
         .ship-health-bar {
             position: fixed;
-            bottom: calc(env(safe-area-inset-bottom, 20px) + 10px);
+            top: env(safe-area-inset-top, 10px);
             left: 50%;
             transform: translateX(-50%);
             width: 70%;
@@ -150,6 +106,52 @@
             color: #ff8888;
             text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
             font-weight: 500;
+        }
+        
+        /* Статистика внизу экрана - компактная */
+        .bottom-stats {
+            position: fixed;
+            bottom: calc(env(safe-area-inset-bottom, 20px) + 10px);
+            left: 50%;
+            transform: translateX(-50%);
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            background: rgba(0, 0, 0, 0.85);
+            padding: 10px 15px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 168, 255, 0.4);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            z-index: 100;
+            min-width: 200px;
+            max-width: 280px;
+        }
+        
+        .bottom-stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .bottom-stat-value {
+            font-size: 14px;
+            font-weight: 700;
+            color: #00ff88;
+            text-shadow: 0 0 3px rgba(0, 255, 136, 0.5);
+            line-height: 1.1;
+            margin-bottom: 2px;
+        }
+        
+        .bottom-stat-label {
+            font-size: 9px;
+            color: #88aaff;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            opacity: 0.9;
+            text-align: center;
+            white-space: nowrap;
         }
         
         /* Меню улучшений - адаптировано под экран */
@@ -440,6 +442,21 @@
                 width: 85%;
                 min-width: 180px;
             }
+            
+            .bottom-stats {
+                padding: 8px 12px;
+                min-width: 180px;
+                max-width: 240px;
+                gap: 6px;
+            }
+            
+            .bottom-stat-value {
+                font-size: 13px;
+            }
+            
+            .bottom-stat-label {
+                font-size: 8px;
+            }
         }
         
         @media (max-height: 600px) {
@@ -471,27 +488,20 @@
                 padding: 14px;
                 font-size: 15px;
             }
+            
+            .ship-health-bar {
+                top: max(env(safe-area-inset-top), 5px);
+            }
+            
+            .bottom-stats {
+                bottom: calc(env(safe-area-inset-bottom, 15px) + 5px);
+            }
         }
         
         /* Портретная и альбомная ориентация */
         @media (orientation: landscape) and (max-height: 500px) {
-            .stats-bar {
-                top: 5px;
-                left: 5px;
-                right: 5px;
-                padding: 4px 8px;
-            }
-            
-            .stat-value {
-                font-size: 12px;
-            }
-            
-            .stat-label {
-                font-size: 7px;
-            }
-            
             .ship-health-bar {
-                bottom: 10px;
+                top: 5px;
                 width: 40%;
                 min-width: 150px;
             }
@@ -499,6 +509,14 @@
             .ship-health-text {
                 top: -15px;
                 font-size: 8px;
+            }
+            
+            .bottom-stats {
+                bottom: 10px;
+                grid-template-columns: repeat(4, 1fr);
+                min-width: 300px;
+                max-width: 400px;
+                padding: 6px 10px;
             }
             
             .menu-overlay {
@@ -522,13 +540,11 @@
         
         /* iPhone X и новее - безопасные зоны */
         @supports (padding: max(0px)) {
-            .stats-bar {
+            .ship-health-bar {
                 top: max(env(safe-area-inset-top), 10px);
-                left: max(env(safe-area-inset-left), 8px);
-                right: max(env(safe-area-inset-right), 8px);
             }
             
-            .ship-health-bar {
+            .bottom-stats {
                 bottom: max(env(safe-area-inset-bottom), 20px);
             }
             
@@ -540,35 +556,35 @@
     </style>
 </head>
 <body>
-    <div id="fpsCounter">FPS: 60</div>
+    <div id="fpsCounter">FPS: 0</div>
     
     <div id="gameContainer">
         <canvas id="gameCanvas"></canvas>
-        
-        <!-- Статус бар -->
-        <div class="stats-bar">
-            <div class="stat-item">
-                <div class="stat-value" id="scoreValue">0</div>
-                <div class="stat-label">Очки</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value" id="coinsValue">50</div>
-                <div class="stat-label">Монеты</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value" id="waveValue">1</div>
-                <div class="stat-label">Волна</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value" id="killsValue">0</div>
-                <div class="stat-label">Убито</div>
-            </div>
-        </div>
         
         <!-- Здоровье корабля -->
         <div class="ship-health-bar">
             <div class="ship-health-text" id="shipHealthText">100/100</div>
             <div class="ship-health-fill" id="shipHealthFill"></div>
+        </div>
+        
+        <!-- Статистика внизу экрана -->
+        <div class="bottom-stats">
+            <div class="bottom-stat-item">
+                <div class="bottom-stat-value" id="scoreValue">0</div>
+                <div class="bottom-stat-label">Очки</div>
+            </div>
+            <div class="bottom-stat-item">
+                <div class="bottom-stat-value" id="coinsValue">50</div>
+                <div class="bottom-stat-label">Монеты</div>
+            </div>
+            <div class="bottom-stat-item">
+                <div class="bottom-stat-value" id="waveValue">1</div>
+                <div class="bottom-stat-label">Волна</div>
+            </div>
+            <div class="bottom-stat-item">
+                <div class="bottom-stat-value" id="killsValue">0</div>
+                <div class="bottom-stat-label">Убито</div>
+            </div>
         </div>
     </div>
 
@@ -740,10 +756,13 @@
         // Ключ для LocalStorage
         const SAVE_KEY = 'space_shooter_save';
         
-        // FPS счетчик
-        let fps = 60;
+        // Системные переменные для FPS и дельта-тайм
+        let fps = 0;
         let frameCount = 0;
         let lastFpsUpdate = 0;
+        let lastFrameTime = 0;
+        let deltaTime = 0;
+        const targetFPS = 60; // Целевой FPS для всех устройств
         const fpsCounter = document.getElementById('fpsCounter');
         
         // Стандартные значения для сброса
@@ -775,7 +794,7 @@
                 baseHeight: 60,
                 currentWidth: 60,
                 currentHeight: 60,
-                speed: 8,
+                speed: 300, // Увеличенная скорость в пикселях в секунду
                 color: '#00a8ff',
                 hitbox: {
                     x: 0,
@@ -792,7 +811,7 @@
             touchX: 0,
             isTouching: false,
             upgrades: {
-                fireRate: { level: 1, cost: 30, value: 400 },
+                fireRate: { level: 1, cost: 30, value: 400 }, // В миллисекундах
                 damage: { level: 1, cost: 40, value: 10 },
                 multishot: { level: 1, cost: 60, value: 1 },
                 health: { level: 1, cost: 50, value: 100 }
@@ -801,6 +820,14 @@
             objectPool: {
                 bullets: [],
                 enemies: []
+            },
+            // Константы скорости (пикселей в секунду)
+            constants: {
+                bulletSpeed: 600, // Быстрее пули
+                enemyBaseSpeed: 120, // Базовая скорость врагов
+                starSpeed: 50,
+                waveTimerSpeed: 1, // Скорость увеличения таймера волн
+                enemySpawnSpeed: 1 // Скорость увеличения таймера спавна
             }
         };
         
@@ -823,7 +850,6 @@
                 };
                 
                 localStorage.setItem(SAVE_KEY, JSON.stringify(saveData));
-                console.log('Игра сохранена');
             } catch (e) {
                 console.error('Ошибка при сохранении игры:', e);
             }
@@ -837,12 +863,9 @@
                 if (savedData) {
                     const parsedData = JSON.parse(savedData);
                     
-                    // Проверяем версию сохранения
                     if (parsedData.version === '1.0') {
-                        // Загружаем монеты
                         game.totalCoins = parsedData.totalCoins || DEFAULT_GAME_STATE.totalCoins;
                         
-                        // Загружаем улучшения
                         if (parsedData.upgrades) {
                             if (parsedData.upgrades.fireRate) {
                                 game.upgrades.fireRate.level = parsedData.upgrades.fireRate.level || 1;
@@ -869,11 +892,9 @@
                             }
                         }
                         
-                        // Загружаем максимальное здоровье
                         game.maxHealth = parsedData.maxHealth || DEFAULT_GAME_STATE.maxHealth;
                         game.playerHealth = game.maxHealth;
                         
-                        console.log('Игра загружена');
                         return true;
                     }
                 }
@@ -881,9 +902,7 @@
                 console.error('Ошибка при загрузке игры:', e);
             }
             
-            // Если сохранение не найдено или произошла ошибка
             resetToDefault();
-            console.log('Создано новое сохранение');
             return false;
         }
         
@@ -891,7 +910,7 @@
         function resetProgress() {
             if (confirm('Вы уверены, что хотите сбросить весь прогресс?\nВсе улучшения и монеты будут потеряны.')) {
                 resetToDefault();
-                saveGame(); // Сохраняем сброшенное состояние
+                saveGame();
                 updateAllDisplays();
                 updateHealthDisplay();
                 alert('Прогресс сброшен!');
@@ -908,7 +927,6 @@
             game.maxHealth = DEFAULT_GAME_STATE.maxHealth;
             game.playerHealth = game.maxHealth;
             
-            // Обновляем ширину корабля
             updatePlayerWidth();
         }
         
@@ -937,13 +955,13 @@
                     y: Math.random() * canvas.height,
                     size: Math.random() * 1.5 + 0.5,
                     brightness: Math.random() * 0.2 + 0.1,
-                    speed: Math.random() * 0.1 + 0.05,
+                    speed: game.constants.starSpeed * (Math.random() * 0.5 + 0.5),
                     twinkle: Math.random() * 0.15 + 0.05
                 });
             }
         }
         
-        // Отрисовка звездного фона
+        // Отрисовка звездного фона с deltaTime
         function drawStars() {
             ctx.fillStyle = '#000';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -959,7 +977,8 @@
                 ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
                 ctx.fill();
                 
-                star.y += star.speed;
+                // Движение с учетом deltaTime
+                star.y += star.speed * deltaTime;
                 if (star.y > canvas.height) {
                     star.y = 0;
                     star.x = Math.random() * canvas.width;
@@ -1096,7 +1115,7 @@
             }
         }
         
-        // Автоматическая стрельба
+        // Автоматическая стрельба с deltaTime
         function autoShoot() {
             const now = Date.now();
             const fireDelay = game.upgrades.fireRate.value;
@@ -1125,7 +1144,7 @@
                         y: game.player.y + 5,
                         width: 4,
                         height: 12,
-                        speed: 12,
+                        speed: game.constants.bulletSpeed,
                         damage: game.upgrades.damage.value,
                         color: bulletCount > 1 ? '#00ff88' : '#00a8ff'
                     };
@@ -1173,7 +1192,7 @@
                 enemy.y = -size - 10;
                 enemy.width = size;
                 enemy.height = size;
-                enemy.speed = (1.2 + waveModifier * 0.15) * speedMultiplier;
+                enemy.speed = (game.constants.enemyBaseSpeed + waveModifier * 15) * speedMultiplier;
                 enemy.health = health;
                 enemy.maxHealth = health;
                 enemy.color = colors[enemyType];
@@ -1191,7 +1210,7 @@
                     y: -size - 10,
                     width: size,
                     height: size,
-                    speed: (1.2 + waveModifier * 0.15) * speedMultiplier,
+                    speed: (game.constants.enemyBaseSpeed + waveModifier * 15) * speedMultiplier,
                     health: health,
                     maxHealth: health,
                     color: colors[enemyType],
@@ -1273,14 +1292,22 @@
                     rect1.y + rect1.height < rect2.y);
         }
         
-        // Обновление игры
+        // Обновление игры с deltaTime
         function update(currentTime) {
             if (!game.running) return;
+            
+            // Расчет deltaTime
+            if (!lastFrameTime) lastFrameTime = currentTime;
+            deltaTime = (currentTime - lastFrameTime) / 1000; // В секундах
+            lastFrameTime = currentTime;
+            
+            // Ограничиваем deltaTime для избежания скачков
+            deltaTime = Math.min(deltaTime, 0.1);
             
             // Обновление FPS
             frameCount++;
             if (currentTime - lastFpsUpdate >= 1000) {
-                fps = Math.min(60, frameCount);
+                fps = frameCount;
                 frameCount = 0;
                 lastFpsUpdate = currentTime;
                 if (fpsCounter) {
@@ -1291,9 +1318,12 @@
                 }
             }
             
-            // Движение игрока
+            // Движение игрока с deltaTime
             if (game.isTouching) {
-                game.player.x = game.touchX - game.player.currentWidth / 2;
+                const targetX = game.touchX - game.player.currentWidth / 2;
+                const dx = targetX - game.player.x;
+                // Плавное движение с deltaTime
+                game.player.x += dx * 5 * deltaTime;
                 game.player.x = Math.max(0, Math.min(game.player.x, canvas.width - game.player.currentWidth));
                 updatePlayerHitbox();
             }
@@ -1301,11 +1331,10 @@
             // Автоматическая стрельба
             autoShoot();
             
-            // Обновление волн
-            game.waveTimer++;
-            game.enemySpawnTimer++;
+            // Обновление волн с deltaTime
+            game.waveTimer += game.constants.waveTimerSpeed * deltaTime * 60; // Нормализуем к 60 FPS
             
-            const waveDuration = Math.max(1200, 1800 - game.wave * 50);
+            const waveDuration = Math.max(30, 45 - game.wave * 0.5); // В секундах
             if (game.waveTimer > waveDuration) {
                 game.wave++;
                 game.waveTimer = 0;
@@ -1319,8 +1348,10 @@
                 }
             }
             
-            // Создание врагов
-            const spawnDelay = Math.max(20, 90 - game.wave * 3);
+            // Создание врагов с deltaTime
+            game.enemySpawnTimer += game.constants.enemySpawnSpeed * deltaTime * 60; // Нормализуем к 60 FPS
+            
+            const spawnDelay = Math.max(0.5, 1.5 - game.wave * 0.05); // В секундах
             if (game.enemySpawnTimer > spawnDelay) {
                 createEnemy();
                 game.enemySpawnTimer = 0;
@@ -1333,10 +1364,10 @@
                 }
             }
             
-            // Обновление пуль
+            // Обновление пуль с deltaTime
             for (let i = game.bullets.length - 1; i >= 0; i--) {
                 const bullet = game.bullets[i];
-                bullet.y -= bullet.speed;
+                bullet.y -= bullet.speed * deltaTime;
                 
                 if (bullet.y < -bullet.height) {
                     game.objectPool.bullets.push(game.bullets[i]);
@@ -1374,7 +1405,7 @@
                             game.kills++;
                             
                             updateAllDisplays();
-                            saveGame(); // Сохраняем после получения монет
+                            saveGame();
                             
                             game.objectPool.enemies.push(game.enemies[j]);
                             game.enemies.splice(j, 1);
@@ -1384,10 +1415,10 @@
                 }
             }
             
-            // Обновление врагов и проверка столкновений с игроком
+            // Обновление врагов и проверка столкновений с игроком с deltaTime
             for (let i = game.enemies.length - 1; i >= 0; i--) {
                 const enemy = game.enemies[i];
-                enemy.y += enemy.speed;
+                enemy.y += enemy.speed * deltaTime;
                 updateEnemyHitbox(enemy);
                 
                 if (checkCollision(game.player.hitbox, enemy.hitbox)) {
@@ -1563,7 +1594,7 @@
                 
                 updateAllDisplays();
                 updateHealthDisplay();
-                saveGame(); // Сохраняем после покупки улучшения
+                saveGame();
             }
         }
         
@@ -1577,7 +1608,7 @@
                 game.coinsEarned += bonus;
             }
             
-            saveGame(); // Сохраняем при завершении игры
+            saveGame();
             
             const gameOverMenu = document.getElementById('gameOverMenu');
             if (gameOverMenu) {
@@ -1598,6 +1629,7 @@
             game.enemies = [];
             game.waveTimer = 0;
             game.enemySpawnTimer = 0;
+            lastFrameTime = 0; // Сбрасываем время для deltaTime
             
             updatePlayerWidth();
             initPlayer();
@@ -1608,7 +1640,7 @@
             document.getElementById('gameOverMenu').style.display = 'none';
         }
         
-        // Игровой цикл
+        // Игровой цикл с фиксированным временем
         function gameLoop(currentTime) {
             update(currentTime);
             draw();
