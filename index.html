@@ -107,7 +107,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-width: 60px;
+            min-width: 65px;
             flex: 1;
         }
         
@@ -161,14 +161,6 @@
             color: #ffcc00;
         }
         
-        .wave-stat .stat-label {
-            color: #ff88ff;
-        }
-        
-        .wave-stat .stat-value {
-            color: #ff88ff;
-        }
-        
         .kills-stat .stat-label {
             color: #ffaa88;
         }
@@ -183,6 +175,15 @@
         
         .bullets-stat .stat-value {
             color: #88ffaa;
+        }
+        
+        /* Таймер игры */
+        .time-stat .stat-label {
+            color: #aa88ff;
+        }
+        
+        .time-stat .stat-value {
+            color: #aa88ff;
         }
         
         /* Меню улучшений - ПОЛНОСТЬЮ АДАПТИВНОЕ */
@@ -472,7 +473,7 @@
             }
             
             .stat-container {
-                min-width: 55px;
+                min-width: 60px;
             }
             
             .stat-label {
@@ -500,7 +501,7 @@
             }
             
             .stat-container {
-                min-width: 65px;
+                min-width: 70px;
             }
             
             .stat-label {
@@ -546,7 +547,7 @@
             }
             
             .stat-container {
-                min-width: 50px;
+                min-width: 55px;
             }
             
             .stat-label {
@@ -616,7 +617,7 @@
             }
             
             .stat-container {
-                min-width: 70px;
+                min-width: 75px;
             }
             
             .stat-label {
@@ -655,7 +656,7 @@
             }
             
             .stat-container {
-                min-width: 80px;
+                min-width: 85px;
             }
             
             .stat-label {
@@ -716,10 +717,10 @@
                 <div class="stat-value" id="coinsValue">50</div>
             </div>
             
-            <!-- Волна -->
-            <div class="ui-element stat-container wave-stat" id="waveContainer">
-                <div class="stat-label">Волна</div>
-                <div class="stat-value" id="waveValue">1</div>
+            <!-- Время игры -->
+            <div class="ui-element stat-container time-stat" id="timeContainer">
+                <div class="stat-label">Время</div>
+                <div class="stat-value" id="timeValue">0:00</div>
             </div>
             
             <!-- Убито -->
@@ -817,12 +818,12 @@
             <div class="final-stats">
                 <h3>Ваш результат</h3>
                 <div class="stat-row">
-                    <span class="stat-label-small">Счет:</span>
-                    <span class="stat-value-small" id="finalScore">0</span>
+                    <span class="stat-label-small">Время игры:</span>
+                    <span class="stat-value-small" id="finalTime">0:00</span>
                 </div>
                 <div class="stat-row">
-                    <span class="stat-label-small">Волна:</span>
-                    <span class="stat-value-small" id="finalWave">1</span>
+                    <span class="stat-label-small">Счет:</span>
+                    <span class="stat-value-small" id="finalScore">0</span>
                 </div>
                 <div class="stat-row">
                     <span class="stat-label-small">Уничтожено:</span>
@@ -931,7 +932,7 @@
             score: 0,
             totalCoins: 50,
             coinsEarned: 0,
-            wave: 1,
+            gameTime: 0, // Время игры в секундах
             kills: 0,
             playerHealth: 2,
             maxHealth: 2,
@@ -956,7 +957,6 @@
             bullets: [],
             enemies: [],
             lastShot: 0,
-            waveTimer: 0,
             enemySpawnTimer: 0,
             touchX: 0,
             isTouching: false,
@@ -973,10 +973,16 @@
             },
             constants: {
                 bulletSpeed: 600,
-                enemyBaseSpeed: 90,
+                enemyBaseSpeed: 80, // Снизил базовую скорость для легкого начала
                 starSpeed: 50,
-                waveTimerSpeed: 0.6,
                 enemySpawnSpeed: 0.3
+            },
+            difficulty: {
+                timeScale: 0, // Масштаб времени игры (0-1)
+                speedMultiplier: 1.0,
+                healthMultiplier: 1.0,
+                spawnRateMultiplier: 1.0,
+                specialEnemyChance: 0.0
             }
         };
         
@@ -1382,43 +1388,71 @@
             }
         }
         
-        // Создание противника - БОЛЕЕ СЛОЖНЫЕ ВРАГИ СО ВРЕМЕНЕМ
-        function createEnemy() {
-            const waveModifier = Math.min(20, game.wave * 0.5); // Увеличил множитель
+        // Обновление сложности игры на основе времени
+        function updateDifficulty() {
+            // Время в минутах для плавного увеличения сложности
+            const timeInMinutes = game.gameTime / 60;
             
-            // Размер врага зависит от волны (больше на поздних волнах)
-            const size = 35 + Math.min(15, Math.floor(game.wave / 5)); // Увеличивается с волнами
+            // Масштаб времени (0-1), где 1 достигается через 10 минут
+            game.difficulty.timeScale = Math.min(1.0, timeInMinutes / 10);
+            
+            // Плавное увеличение параметров сложности
+            game.difficulty.speedMultiplier = 1.0 + game.difficulty.timeScale * 0.8; // Макс +80%
+            game.difficulty.healthMultiplier = 1.0 + game.difficulty.timeScale * 0.6; // Макс +60%
+            game.difficulty.spawnRateMultiplier = 1.0 + game.difficulty.timeScale * 0.7; // Макс +70%
+            game.difficulty.specialEnemyChance = game.difficulty.timeScale * 0.2; // Макс 20%
+            
+            // Первые 30 секунд - очень легкая сложность
+            if (game.gameTime < 30) {
+                game.difficulty.speedMultiplier = 0.8;
+                game.difficulty.healthMultiplier = 0.9;
+                game.difficulty.spawnRateMultiplier = 0.7;
+                game.difficulty.specialEnemyChance = 0;
+            }
+            // От 30 до 60 секунд - легкая сложность
+            else if (game.gameTime < 60) {
+                game.difficulty.speedMultiplier = 0.9;
+                game.difficulty.healthMultiplier = 1.0;
+                game.difficulty.spawnRateMultiplier = 0.8;
+                game.difficulty.specialEnemyChance = 0.02;
+            }
+        }
+        
+        // Создание противника с ПЛАВНОЙ СЛОЖНОСТЬЮ
+        function createEnemy() {
+            updateDifficulty();
+            
+            // Размер врага немного увеличивается со временем
+            const size = 35 + Math.min(10, game.difficulty.timeScale * 10);
             
             let enemyType = 'normal';
             let speedMultiplier = 1;
             let healthMultiplier = 1;
-            let damageMultiplier = 1; // Новый параметр - урон от врага
+            let damageMultiplier = 1;
             
-            // Более частое появление особых врагов на поздних волнах
-            const specialEnemyChance = Math.min(0.15, 0.03 + (game.wave * 0.01));
-            
-            if (game.wave >= 3 && Math.random() < specialEnemyChance) {
+            // Определяем тип врага (особые враги появляются редко в начале)
+            if (Math.random() < game.difficulty.specialEnemyChance) {
                 const rand = Math.random();
-                if (rand < 0.4) {
+                if (rand < 0.5) {
                     enemyType = 'fast';
-                    speedMultiplier = 1.8 + (game.wave * 0.02); // Ускоряется с волнами
-                    healthMultiplier = 0.6;
+                    speedMultiplier = 1.5 + game.difficulty.timeScale * 0.5; // 1.5-2.0
+                    healthMultiplier = 0.7 + game.difficulty.timeScale * 0.3; // 0.7-1.0
                     damageMultiplier = 1.2;
-                } else if (rand < 0.7) {
+                } else if (rand < 0.8) {
                     enemyType = 'tank';
-                    speedMultiplier = 0.7 + (game.wave * 0.01);
-                    healthMultiplier = 2.2 + (game.wave * 0.05); // Больше здоровья с волнами
+                    speedMultiplier = 0.8;
+                    healthMultiplier = 1.8 + game.difficulty.timeScale * 0.7; // 1.8-2.5
                     damageMultiplier = 1.5;
                 } else {
                     enemyType = 'boss';
-                    speedMultiplier = 0.5 + (game.wave * 0.008);
-                    healthMultiplier = 3.0 + (game.wave * 0.08); // Значительно больше здоровья
+                    speedMultiplier = 0.6;
+                    healthMultiplier = 2.5 + game.difficulty.timeScale * 1.0; // 2.5-3.5
                     damageMultiplier = 2.0;
                 }
             }
             
-            // Базовая статистика увеличивается с волнами
-            const baseHealth = 20 + waveModifier * 3;
+            // Базовая статистика с плавным увеличением
+            const baseHealth = 15 + game.difficulty.timeScale * 20; // 15-35
             const health = Math.floor(baseHealth * healthMultiplier);
             
             const colors = {
@@ -1435,12 +1469,12 @@
                 enemy.y = -size - 10;
                 enemy.width = size;
                 enemy.height = size;
-                enemy.speed = (game.constants.enemyBaseSpeed + waveModifier * 8) * speedMultiplier; // Увеличил рост скорости
+                enemy.speed = (game.constants.enemyBaseSpeed * game.difficulty.speedMultiplier) * speedMultiplier;
                 enemy.health = health;
                 enemy.maxHealth = health;
                 enemy.color = colors[enemyType];
-                enemy.damage = damageMultiplier; // Сохраняем множитель урона
-                enemy.value = 3 + Math.floor(waveModifier / 2) * (enemyType === 'boss' ? 4 : enemyType === 'tank' ? 3 : enemyType === 'fast' ? 2 : 1);
+                enemy.damage = damageMultiplier;
+                enemy.value = Math.floor(2 + game.difficulty.timeScale * 3 * (enemyType === 'boss' ? 3 : enemyType === 'tank' ? 2 : enemyType === 'fast' ? 1.5 : 1));
                 enemy.type = enemyType;
                 enemy.hitbox = {
                     x: enemy.x,
@@ -1454,12 +1488,12 @@
                     y: -size - 10,
                     width: size,
                     height: size,
-                    speed: (game.constants.enemyBaseSpeed + waveModifier * 8) * speedMultiplier,
+                    speed: (game.constants.enemyBaseSpeed * game.difficulty.speedMultiplier) * speedMultiplier,
                     health: health,
                     maxHealth: health,
                     color: colors[enemyType],
                     damage: damageMultiplier,
-                    value: 3 + Math.floor(waveModifier / 2) * (enemyType === 'boss' ? 4 : enemyType === 'tank' ? 3 : enemyType === 'fast' ? 2 : 1),
+                    value: Math.floor(2 + game.difficulty.timeScale * 3 * (enemyType === 'boss' ? 3 : enemyType === 'tank' ? 2 : enemyType === 'fast' ? 1.5 : 1)),
                     type: enemyType,
                     hitbox: {
                         x: 0,
@@ -1469,19 +1503,6 @@
                     }
                 };
                 updateEnemyHitbox(enemy);
-            }
-            
-            // Добавляем специальные способности для врагов на высоких волнах
-            if (game.wave >= 10 && enemy.type !== 'normal') {
-                enemy.specialAbility = true;
-                if (enemy.type === 'fast') {
-                    enemy.speed *= 1.3; // Еще быстрее
-                } else if (enemy.type === 'tank') {
-                    enemy.health = Math.floor(enemy.health * 1.5);
-                    enemy.maxHealth = enemy.health;
-                } else if (enemy.type === 'boss') {
-                    enemy.value *= 2; // Двойная награда
-                }
             }
             
             game.enemies.push(enemy);
@@ -1525,7 +1546,7 @@
             
             // КВАДРАТИКИ ЗДОРОВЬЯ ДЛЯ ВСЕХ ВРАГОВ
             const healthPercent = enemy.health / enemy.maxHealth;
-            const maxHealthIcons = Math.min(8, Math.ceil(enemy.maxHealth / 10)); // Максимум 8 иконок
+            const maxHealthIcons = Math.min(8, Math.ceil(enemy.maxHealth / 10));
             const healthIconsCount = Math.ceil(maxHealthIcons * healthPercent);
             const iconSize = 4;
             const spacing = 2;
@@ -1565,15 +1586,15 @@
         
         // Обработка столкновения с врагом
         function handleCollisionWithEnemy(enemy) {
-            // Отнимаем HP в зависимости от типа врага и волны
+            // Отнимаем HP в зависимости от типа врага
             let damageTaken = 1;
             if (enemy.damage) {
                 damageTaken = Math.max(1, Math.floor(enemy.damage));
             }
             
-            // Увеличиваем урон на поздних волнах
-            if (game.wave >= 10) {
-                damageTaken += Math.floor(game.wave / 10);
+            // Небольшое увеличение урона со временем
+            if (game.difficulty.timeScale > 0.5) {
+                damageTaken += 1;
             }
             
             game.playerHealth -= damageTaken;
@@ -1646,6 +1667,16 @@
             updateBulletsDisplay();
         }
         
+        // Обновление отображения времени
+        function updateTimeDisplay() {
+            const timeValue = document.getElementById('timeValue');
+            if (timeValue) {
+                const minutes = Math.floor(game.gameTime / 60);
+                const seconds = Math.floor(game.gameTime % 60);
+                timeValue.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            }
+        }
+        
         // Обновление игры с deltaTime
         function update(currentTime) {
             if (!game.running) return;
@@ -1672,6 +1703,13 @@
                 }
             }
             
+            // Обновляем время игры
+            game.gameTime += deltaTime;
+            updateTimeDisplay();
+            
+            // Обновляем сложность
+            updateDifficulty();
+            
             // Обновляем эффект повреждения
             updateDamageEffect();
             
@@ -1688,40 +1726,18 @@
             // Автоматическая стрельба
             autoShoot();
             
-            // Обновление волн с deltaTime - ВОЛНЫ СТАНОВЯТСЯ КОРОЧЕ
-            game.waveTimer += game.constants.waveTimerSpeed * deltaTime * 60;
+            // Создание врагов с deltaTime (плавное увеличение частоты)
+            game.enemySpawnTimer += game.constants.enemySpawnSpeed * deltaTime * 60 * game.difficulty.spawnRateMultiplier;
             
-            const waveDuration = Math.max(40, 60 - game.wave * 0.3); // Волны становятся короче
-            if (game.waveTimer > waveDuration) {
-                game.wave++;
-                game.waveTimer = 0;
-                updateDisplay('waveValue', game.wave);
-                
-                // Увеличиваем базовую скорость врагов с каждой волной
-                game.constants.enemyBaseSpeed = 90 + (game.wave * 1.5);
-                
-                if (game.wave % 3 === 0) {
-                    const bonus = 4 + Math.floor(game.wave / 4); // Увеличиваем бонус
-                    game.totalCoins += bonus;
-                    game.coinsEarned += bonus;
-                    updateAllDisplays();
-                }
-            }
-            
-            // Создание врагов с deltaTime
-            game.enemySpawnTimer += game.constants.enemySpawnSpeed * deltaTime * 60;
-            
-            const spawnDelay = Math.max(1.5, 3.0 - game.wave * 0.03); // Враги появляются чаще
-            if (game.enemySpawnTimer > spawnDelay) {
+            // Базовая задержка спавна (увеличивается со временем)
+            const baseSpawnDelay = Math.max(2.5, 4.0 - game.difficulty.timeScale * 1.5);
+            if (game.enemySpawnTimer > baseSpawnDelay) {
                 createEnemy();
                 game.enemySpawnTimer = 0;
                 
-                // Дополнительные враги на поздних волнах
-                if (game.wave >= 5 && Math.random() < 0.1) {
-                    setTimeout(() => createEnemy(), 800);
-                }
-                if (game.wave >= 10 && Math.random() < 0.08) {
-                    setTimeout(() => createEnemy(), 1600);
+                // Редкие дополнительные враги на поздней стадии
+                if (game.difficulty.timeScale > 0.6 && Math.random() < 0.1) {
+                    setTimeout(() => createEnemy(), 1000);
                 }
             }
             
@@ -1747,23 +1763,18 @@
                         
                         if (enemy.health <= 0) {
                             let coinsEarned = enemy.value;
-                            let scoreEarned = 10 + game.wave * 2; // Увеличил очки
+                            // Базовые очки зависят от сложности
+                            let scoreEarned = 8 + Math.floor(game.difficulty.timeScale * 12);
                             
                             if (enemy.type === 'fast') {
-                                coinsEarned += 2;
-                                scoreEarned += 5;
+                                coinsEarned = Math.floor(coinsEarned * 1.2);
+                                scoreEarned += 3;
                             } else if (enemy.type === 'tank') {
-                                coinsEarned += 3;
-                                scoreEarned += 8;
-                            } else if (enemy.type === 'boss') {
-                                coinsEarned += 8;
-                                scoreEarned += 20;
-                            }
-                            
-                            // Бонус за специальных врагов
-                            if (enemy.specialAbility) {
-                                coinsEarned += 2;
+                                coinsEarned = Math.floor(coinsEarned * 1.5);
                                 scoreEarned += 5;
+                            } else if (enemy.type === 'boss') {
+                                coinsEarned = Math.floor(coinsEarned * 2.0);
+                                scoreEarned += 15;
                             }
                             
                             game.score += Math.round(scoreEarned);
@@ -1810,11 +1821,11 @@
             // Взрыв
             ctx.fillStyle = 'rgba(255, 100, 100, 0.6)';
             ctx.beginPath();
-            ctx.arc(x, y, 25, 0, Math.PI * 2); // Увеличил размер взрыва для больших врагов
+            ctx.arc(x, y, 25, 0, Math.PI * 2);
             ctx.fill();
             
             // Осколки
-            for (let i = 0; i < 8; i++) { // Больше осколков
+            for (let i = 0; i < 8; i++) {
                 const angle = Math.random() * Math.PI * 2;
                 const distance = 15 + Math.random() * 20;
                 const fragmentX = x + Math.cos(angle) * distance;
@@ -1856,8 +1867,8 @@
         function updateAllDisplays() {
             updateDisplay('scoreValue', game.score);
             updateDisplay('coinsValue', game.totalCoins);
-            updateDisplay('waveValue', game.wave);
             updateDisplay('killsValue', game.kills);
+            updateTimeDisplay();
             updateMenuDisplays();
         }
         
@@ -1881,7 +1892,7 @@
             updateDisplay('startHealthPrice', game.upgrades.health.cost);
             
             updateDisplay('finalScore', game.score);
-            updateDisplay('finalWave', game.wave);
+            updateDisplay('finalTime', formatTime(game.gameTime));
             updateDisplay('finalKills', game.kills);
             updateDisplay('finalCoinsEarned', game.coinsEarned);
             updateDisplay('gameOverCoins', game.totalCoins);
@@ -1895,6 +1906,13 @@
             updateDisplay('gameOverHealthPrice', game.upgrades.health.cost);
             
             updateUpgradeButtons();
+        }
+        
+        // Форматирование времени
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${minutes}:${secs.toString().padStart(2, '0')}`;
         }
         
         function updateUpgradeButtons() {
@@ -1968,10 +1986,11 @@
             game.upgrades.multishot.value = game.upgrades.multishot.level;
             updateBulletsDisplay();
             
-            if (game.wave >= 5) {
-                const bonus = Math.floor(game.wave / 2.5); // Увеличил бонус за конец игры
-                game.totalCoins += bonus;
-                game.coinsEarned += bonus;
+            // Бонус за длительную игру
+            if (game.gameTime >= 60) { // 1 минута и больше
+                const timeBonus = Math.floor(game.gameTime / 30); // +1 монета за каждые 30 секунд
+                game.totalCoins += timeBonus;
+                game.coinsEarned += timeBonus;
             }
             
             saveGame();
@@ -1994,17 +2013,22 @@
             game.running = true;
             game.score = 0;
             game.coinsEarned = 0;
-            game.wave = 1;
+            game.gameTime = 0;
             game.kills = 0;
             game.playerHealth = game.maxHealth;
             game.bullets = [];
             game.enemies = [];
-            game.waveTimer = 0;
             game.enemySpawnTimer = 0;
             lastFrameTime = 0;
             
-            // Восстанавливаем базовую скорость врагов
-            game.constants.enemyBaseSpeed = 90;
+            // Сброс сложности
+            game.difficulty = {
+                timeScale: 0,
+                speedMultiplier: 1.0,
+                healthMultiplier: 1.0,
+                spawnRateMultiplier: 1.0,
+                specialEnemyChance: 0.0
+            };
             
             // Восстанавливаем мультивыстрел до сохраненного уровня
             game.upgrades.multishot.value = game.upgrades.multishot.level;
@@ -2014,6 +2038,7 @@
             initPlayer();
             updateAllDisplays();
             updateHealthDisplay();
+            updateTimeDisplay();
             
             document.getElementById('startMenu').style.display = 'none';
             document.getElementById('gameOverMenu').style.display = 'none';
@@ -2135,6 +2160,7 @@
             updateAllDisplays();
             updateHealthDisplay();
             updateBulletsDisplay();
+            updateTimeDisplay();
             
             document.getElementById('startMenu').style.display = 'flex';
             
