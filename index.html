@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Космический Стрелок</title>
     <style>
         /* Сброс и базовые стили */
@@ -14,6 +14,7 @@
             -webkit-user-select: none;
             user-select: none;
             -webkit-text-size-adjust: 100%;
+            touch-action: manipulation;
         }
         
         html, body {
@@ -28,9 +29,9 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             color: #fff;
             overscroll-behavior: none;
-            touch-action: manipulation;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
+            -webkit-overflow-scrolling: touch;
         }
         
         /* Game container - занимает весь экран */
@@ -57,7 +58,7 @@
         /* FPS счетчик */
         #fpsCounter {
             position: fixed;
-            top: env(safe-area-inset-top, 10px);
+            top: max(env(safe-area-inset-top), 10px);
             right: 10px;
             font-size: 10px;
             color: rgba(255, 255, 255, 0.5);
@@ -70,77 +71,84 @@
             backdrop-filter: blur(2px);
         }
         
-        /* Компактная строка интерфейса внизу */
+        /* АДАПТИВНАЯ СТРОКА ИНТЕРФЕЙСА ВНИЗУ */
         .game-ui-row {
             position: fixed;
-            bottom: calc(env(safe-area-inset-bottom, 20px) + 10px);
+            bottom: max(env(safe-area-inset-bottom, 20px), 10px);
             left: 50%;
             transform: translateX(-50%);
             display: flex;
-            gap: 8px;
+            gap: 6px;
             align-items: center;
             justify-content: center;
             z-index: 1000;
-            min-width: 300px;
-            max-width: 500px;
-            padding: 0 10px;
+            width: calc(100% - 20px);
+            max-width: 400px;
+            padding: 0 8px;
         }
         
         /* Общий стиль для всех элементов UI */
         .ui-element {
-            background: rgba(0, 0, 0, 0.75);
+            background: rgba(0, 0, 0, 0.85);
             border-radius: 8px;
-            backdrop-filter: blur(5px);
+            backdrop-filter: blur(8px);
             border: 1px solid rgba(0, 168, 255, 0.3);
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
             display: flex;
             align-items: center;
-            padding: 6px 8px;
-            height: 36px;
+            padding: 5px 6px;
+            height: 34px;
+            flex-shrink: 0;
         }
         
-        /* Новый контейнер здоровья с квадратиками */
+        /* Контейнер здоровья с квадратиками */
         .health-container {
             display: flex;
             align-items: center;
-            gap: 6px;
-            min-width: 120px;
+            gap: 5px;
+            min-width: 0;
+            flex: 1;
+            max-width: 130px;
         }
         
         .health-label {
-            font-size: 10px;
+            font-size: 9px;
             color: #ff8888;
             font-weight: 600;
             white-space: nowrap;
+            flex-shrink: 0;
         }
         
         .health-value {
-            font-size: 12px;
+            font-size: 11px;
             color: #00ff88;
             font-weight: 700;
             text-shadow: 0 0 2px rgba(0, 255, 136, 0.5);
-            min-width: 30px;
+            min-width: 28px;
             text-align: center;
+            flex-shrink: 0;
         }
         
-        /* Новые стили для квадратиков здоровья */
+        /* Квадратики здоровья */
         .health-icons {
             display: flex;
-            gap: 3px;
+            gap: 2px;
             align-items: center;
             flex-wrap: wrap;
-            max-width: 80px;
-            min-height: 24px;
+            max-width: 70px;
+            min-height: 22px;
             justify-content: center;
+            flex: 1;
         }
         
         .health-icon {
-            width: 12px;
-            height: 12px;
+            width: 10px;
+            height: 10px;
             background: linear-gradient(135deg, #ff3232, #ff9966);
-            border-radius: 2px;
-            box-shadow: 0 0 3px rgba(255, 50, 50, 0.5);
+            border-radius: 1px;
+            box-shadow: 0 0 2px rgba(255, 50, 50, 0.5);
             transition: all 0.2s ease;
+            flex-shrink: 0;
         }
         
         .health-icon.lost {
@@ -149,12 +157,15 @@
             transform: scale(0.8);
         }
         
-        /* Статистика игры - компактная */
+        /* Статистика игры */
         .stats-container {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 0 10px;
+            gap: 8px;
+            padding: 0 6px;
+            flex: 2;
+            min-width: 0;
+            justify-content: center;
         }
         
         .stat-item {
@@ -162,55 +173,70 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-width: 50px;
+            min-width: 40px;
+            flex: 1;
         }
         
         .stat-value {
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 700;
             color: #00ff88;
             text-shadow: 0 0 2px rgba(0, 255, 136, 0.5);
             line-height: 1.1;
             margin-bottom: 1px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
         }
         
         .stat-label {
-            font-size: 9px;
+            font-size: 8px;
             color: #88aaff;
             text-transform: uppercase;
-            letter-spacing: 0.2px;
+            letter-spacing: 0.1px;
             opacity: 0.9;
             text-align: center;
             white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
         }
         
-        /* Индикатор пуль - компактный */
+        /* Индикатор пуль */
         .bullets-container {
             display: flex;
             align-items: center;
-            gap: 6px;
-            min-width: 100px;
+            gap: 4px;
+            min-width: 0;
+            flex: 1;
+            max-width: 90px;
         }
         
         .bullets-label {
-            font-size: 10px;
+            font-size: 9px;
             color: #88aaff;
             font-weight: 600;
             white-space: nowrap;
+            flex-shrink: 0;
         }
         
         .bullets-icons {
             display: flex;
-            gap: 3px;
+            gap: 2px;
             align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+            flex: 1;
         }
         
         .bullet-icon {
-            width: 6px;
-            height: 10px;
+            width: 5px;
+            height: 8px;
             background: #00ff88;
             border-radius: 1px;
-            box-shadow: 0 0 2px rgba(0, 255, 136, 0.5);
+            box-shadow: 0 0 1px rgba(0, 255, 136, 0.5);
+            flex-shrink: 0;
         }
         
         .bullet-icon.lost {
@@ -218,7 +244,7 @@
             box-shadow: none;
         }
         
-        /* Меню улучшений - адаптировано под экран */
+        /* Меню улучшений - ПОЛНОСТЬЮ АДАПТИВНОЕ */
         .menu-overlay {
             position: fixed;
             top: 0;
@@ -232,83 +258,87 @@
             justify-content: center;
             z-index: 1000;
             backdrop-filter: blur(15px);
-            padding: env(safe-area-inset-top, 20px) 15px env(safe-area-inset-bottom, 20px);
+            padding: max(env(safe-area-inset-top), 15px) 12px max(env(safe-area-inset-bottom), 15px);
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
         
         .upgrades-content {
             background: linear-gradient(135deg, rgba(0, 20, 40, 0.95), rgba(0, 10, 25, 0.97));
-            padding: 20px;
-            border-radius: 16px;
+            padding: 16px;
+            border-radius: 14px;
             border: 1px solid rgba(0, 168, 255, 0.5);
             width: 100%;
-            max-width: 400px;
+            max-width: 360px;
             max-height: calc(100vh - 40px);
             overflow-y: auto;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.7);
             position: relative;
         }
         
         .upgrades-header {
             text-align: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
             border-bottom: 1px solid rgba(0, 168, 255, 0.3);
         }
         
         .upgrades-header h1 {
             color: #00a8ff;
-            font-size: 22px;
-            margin-bottom: 5px;
+            font-size: 20px;
+            margin-bottom: 4px;
             font-weight: 700;
-            text-shadow: 0 0 10px rgba(0, 168, 255, 0.5);
+            text-shadow: 0 0 8px rgba(0, 168, 255, 0.5);
+            line-height: 1.2;
         }
         
         .upgrades-header p {
             color: #88aaff;
-            font-size: 13px;
+            font-size: 12px;
             opacity: 0.9;
+            line-height: 1.3;
         }
         
         .coins-display {
             background: linear-gradient(135deg, rgba(255, 204, 0, 0.15), rgba(255, 153, 0, 0.15));
-            padding: 12px;
-            border-radius: 10px;
+            padding: 10px;
+            border-radius: 8px;
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
             border: 1px solid rgba(255, 204, 0, 0.4);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
         }
         
         .coins-display .label {
             color: #ffcc00;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
-            margin-bottom: 4px;
+            margin-bottom: 3px;
         }
         
         .coins-display .value {
             color: #ffcc00;
-            font-size: 28px;
+            font-size: 24px;
             font-weight: 700;
-            text-shadow: 0 0 12px rgba(255, 204, 0, 0.5);
+            text-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+            line-height: 1.1;
         }
         
         /* Улучшения */
         .upgrades-list {
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
         
         .upgrade-item {
             background: rgba(0, 25, 50, 0.7);
-            padding: 12px 15px;
-            border-radius: 10px;
-            margin-bottom: 10px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
             border: 1px solid rgba(0, 168, 255, 0.3);
             transition: all 0.2s;
         }
         
-        .upgrade-item:hover {
+        .upgrade-item:active {
             background: rgba(0, 30, 60, 0.8);
             border-color: rgba(0, 168, 255, 0.5);
         }
@@ -317,54 +347,60 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 5px;
+            margin-bottom: 4px;
         }
         
         .upgrade-name {
-            font-size: 15px;
+            font-size: 14px;
             color: #00ff88;
             font-weight: 600;
+            flex: 1;
+            margin-right: 8px;
         }
         
         .upgrade-price {
-            font-size: 16px;
+            font-size: 15px;
             color: #ffcc00;
             font-weight: 700;
-            text-shadow: 0 0 6px rgba(255, 204, 0, 0.4);
+            text-shadow: 0 0 5px rgba(255, 204, 0, 0.4);
+            flex-shrink: 0;
         }
         
         .upgrade-info {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
         
         .upgrade-level {
-            font-size: 11px;
+            font-size: 10px;
             color: #ffcc00;
             font-weight: 500;
         }
         
         .upgrade-desc {
-            font-size: 11px;
+            font-size: 10px;
             color: #88aaff;
             opacity: 0.9;
             text-align: right;
+            max-width: 60%;
         }
         
         .upgrade-btn {
             background: linear-gradient(135deg, rgba(0, 168, 255, 0.4), rgba(0, 100, 200, 0.4));
             border: 1px solid rgba(0, 168, 255, 0.6);
             color: #fff;
-            padding: 10px;
-            border-radius: 8px;
+            padding: 9px;
+            border-radius: 7px;
             font-weight: 600;
-            font-size: 13px;
+            font-size: 12px;
             cursor: pointer;
             width: 100%;
             transition: all 0.15s;
             text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+            -webkit-appearance: none;
+            appearance: none;
         }
         
         .upgrade-btn:active {
@@ -384,20 +420,22 @@
         .action-buttons {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 10px;
         }
         
         .start-game-btn, .restart-game-btn {
             background: linear-gradient(135deg, rgba(0, 255, 136, 0.4), rgba(0, 200, 100, 0.4));
             border: 1px solid rgba(0, 255, 136, 0.6);
             color: #fff;
-            padding: 16px;
-            border-radius: 12px;
-            font-size: 16px;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 15px;
             font-weight: 700;
             cursor: pointer;
             transition: all 0.15s;
             text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+            -webkit-appearance: none;
+            appearance: none;
         }
         
         .start-game-btn:active, .restart-game-btn:active {
@@ -410,14 +448,16 @@
             background: linear-gradient(135deg, rgba(255, 50, 50, 0.3), rgba(200, 0, 0, 0.3));
             border: 1px solid rgba(255, 50, 50, 0.6);
             color: #ff8888;
-            padding: 12px;
-            border-radius: 10px;
-            font-size: 14px;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 13px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.15s;
             text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-            margin-top: 8px;
+            margin-top: 6px;
+            -webkit-appearance: none;
+            appearance: none;
         }
         
         .reset-progress-btn:active {
@@ -428,16 +468,16 @@
         /* Статистика */
         .final-stats {
             background: rgba(0, 25, 50, 0.7);
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 16px;
             border: 1px solid rgba(0, 168, 255, 0.3);
         }
         
         .final-stats h3 {
             color: #00ff88;
-            font-size: 16px;
-            margin-bottom: 12px;
+            font-size: 15px;
+            margin-bottom: 10px;
             text-align: center;
             font-weight: 600;
         }
@@ -446,9 +486,9 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 6px 0;
+            padding: 5px 0;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            font-size: 13px;
+            font-size: 12px;
         }
         
         .stat-row:last-child {
@@ -466,9 +506,9 @@
         
         .stat-row.highlight {
             background: rgba(255, 204, 0, 0.1);
-            padding: 8px;
-            border-radius: 6px;
-            margin: 8px 0;
+            padding: 6px;
+            border-radius: 5px;
+            margin: 6px 0;
             border: 1px solid rgba(255, 204, 0, 0.2);
         }
         
@@ -476,88 +516,81 @@
             color: #ffcc00;
         }
         
-        /* Адаптация для очень маленьких экранов */
-        @media (max-width: 360px) {
+        /* ОРИЕНТАЦИЯ ПОРТРЕТ (iPhone в вертикальном положении) */
+        @media (orientation: portrait) {
             .game-ui-row {
-                min-width: 280px;
-                max-width: 340px;
-                gap: 6px;
-                padding: 0 8px;
-                bottom: calc(env(safe-area-inset-bottom, 20px) + 8px);
+                bottom: max(env(safe-area-inset-bottom, 20px), 15px);
+                gap: 5px;
+                padding: 0 6px;
+                width: calc(100% - 16px);
             }
             
             .ui-element {
-                padding: 5px 6px;
+                padding: 4px 5px;
                 height: 32px;
             }
             
             .health-container {
-                min-width: 100px;
-                gap: 4px;
-            }
-            
-            .health-label {
-                font-size: 9px;
-            }
-            
-            .health-value {
-                font-size: 11px;
-                min-width: 25px;
+                max-width: 120px;
             }
             
             .health-icons {
-                max-width: 60px;
+                max-width: 65px;
             }
             
             .health-icon {
-                width: 10px;
-                height: 10px;
+                width: 9px;
+                height: 9px;
             }
             
             .stats-container {
-                gap: 8px;
-                padding: 0 6px;
+                gap: 6px;
+                padding: 0 5px;
             }
             
             .stat-item {
-                min-width: 40px;
+                min-width: 35px;
             }
             
             .stat-value {
-                font-size: 11px;
+                font-size: 10px;
             }
             
             .stat-label {
-                font-size: 8px;
+                font-size: 7px;
             }
             
             .bullets-container {
-                min-width: 80px;
-                gap: 4px;
-            }
-            
-            .bullets-label {
-                font-size: 9px;
+                max-width: 80px;
             }
             
             .bullet-icon {
-                width: 5px;
-                height: 8px;
+                width: 4px;
+                height: 7px;
             }
         }
         
-        @media (max-height: 600px) {
+        /* ОРИЕНТАЦИЯ АЛЬБОМ (iPhone в горизонтальном положении) */
+        @media (orientation: landscape) {
             .game-ui-row {
-                bottom: calc(env(safe-area-inset-bottom, 15px) + 6px);
+                bottom: max(env(safe-area-inset-bottom, 10px), 8px);
+                gap: 8px;
+                padding: 0 10px;
+                width: calc(100% - 20px);
+                max-width: 500px;
             }
             
             .ui-element {
-                padding: 4px 6px;
-                height: 30px;
+                padding: 5px 8px;
+                height: 36px;
+            }
+            
+            .health-container {
+                max-width: 140px;
             }
             
             .health-icons {
-                max-width: 70px;
+                max-width: 80px;
             }
             
             .health-icon {
@@ -565,52 +598,40 @@
                 height: 11px;
             }
             
+            .stats-container {
+                gap: 10px;
+                padding: 0 8px;
+            }
+            
+            .stat-item {
+                min-width: 45px;
+            }
+            
+            .stat-value {
+                font-size: 12px;
+            }
+            
+            .stat-label {
+                font-size: 9px;
+            }
+            
+            .bullets-container {
+                max-width: 100px;
+            }
+            
+            .bullet-icon {
+                width: 6px;
+                height: 9px;
+            }
+            
+            /* Меню в альбомной ориентации */
+            .menu-overlay {
+                padding: max(env(safe-area-inset-top), 10px) 10px max(env(safe-area-inset-bottom), 10px);
+            }
+            
             .upgrades-content {
                 max-height: calc(100vh - 30px);
-                padding: 15px;
-            }
-            
-            .upgrades-header {
-                margin-bottom: 15px;
-                padding-bottom: 10px;
-            }
-            
-            .upgrades-header h1 {
-                font-size: 20px;
-            }
-            
-            .coins-display {
-                padding: 10px;
-                margin-bottom: 15px;
-            }
-            
-            .upgrade-item {
-                padding: 10px 12px;
-                margin-bottom: 8px;
-            }
-            
-            .start-game-btn, .restart-game-btn {
                 padding: 14px;
-                font-size: 15px;
-            }
-        }
-        
-        /* Портретная и альбомная ориентация */
-        @media (orientation: landscape) and (max-height: 500px) {
-            .game-ui-row {
-                bottom: 8px;
-                min-width: 400px;
-                max-width: 500px;
-                gap: 10px;
-            }
-            
-            .menu-overlay {
-                padding: 10px;
-            }
-            
-            .upgrades-content {
-                max-height: calc(100vh - 20px);
-                padding: 15px;
             }
             
             .upgrades-header h1 {
@@ -623,16 +644,277 @@
             }
         }
         
-        /* iPhone X и новее - безопасные зоны */
+        /* ОЧЕНЬ МАЛЕНЬКИЕ ЭКРАНЫ (iPhone SE, iPhone 8 и меньше) */
+        @media (max-width: 375px) and (max-height: 670px) {
+            .game-ui-row {
+                gap: 4px;
+                padding: 0 4px;
+                bottom: max(env(safe-area-inset-bottom, 15px), 12px);
+            }
+            
+            .ui-element {
+                padding: 3px 4px;
+                height: 30px;
+                border-radius: 6px;
+            }
+            
+            .health-container {
+                gap: 3px;
+                max-width: 110px;
+            }
+            
+            .health-label {
+                font-size: 8px;
+            }
+            
+            .health-value {
+                font-size: 10px;
+                min-width: 24px;
+            }
+            
+            .health-icons {
+                max-width: 60px;
+                gap: 1px;
+            }
+            
+            .health-icon {
+                width: 8px;
+                height: 8px;
+            }
+            
+            .stats-container {
+                gap: 4px;
+                padding: 0 3px;
+            }
+            
+            .stat-item {
+                min-width: 32px;
+            }
+            
+            .stat-value {
+                font-size: 9px;
+            }
+            
+            .stat-label {
+                font-size: 6px;
+            }
+            
+            .bullets-container {
+                max-width: 70px;
+                gap: 3px;
+            }
+            
+            .bullets-label {
+                font-size: 8px;
+            }
+            
+            .bullet-icon {
+                width: 3px;
+                height: 6px;
+            }
+            
+            /* Меню для маленьких экранов */
+            .upgrades-content {
+                padding: 12px;
+                border-radius: 10px;
+            }
+            
+            .upgrades-header h1 {
+                font-size: 18px;
+            }
+            
+            .upgrades-header p {
+                font-size: 11px;
+            }
+            
+            .coins-display {
+                padding: 8px;
+            }
+            
+            .coins-display .label {
+                font-size: 10px;
+            }
+            
+            .coins-display .value {
+                font-size: 22px;
+            }
+            
+            .upgrade-item {
+                padding: 8px 10px;
+            }
+            
+            .upgrade-name {
+                font-size: 13px;
+            }
+            
+            .upgrade-price {
+                font-size: 14px;
+            }
+            
+            .upgrade-btn, .start-game-btn, .restart-game-btn, .reset-progress-btn {
+                padding: 8px;
+                font-size: 11px;
+            }
+        }
+        
+        /* iPhone 13 Pro Max и другие большие экраны */
+        @media (min-width: 428px) and (min-height: 926px) {
+            .game-ui-row {
+                gap: 8px;
+                padding: 0 12px;
+                max-width: 420px;
+            }
+            
+            .ui-element {
+                padding: 6px 8px;
+                height: 38px;
+            }
+            
+            .health-container {
+                max-width: 140px;
+            }
+            
+            .health-label {
+                font-size: 10px;
+            }
+            
+            .health-value {
+                font-size: 12px;
+            }
+            
+            .health-icons {
+                max-width: 75px;
+            }
+            
+            .health-icon {
+                width: 11px;
+                height: 11px;
+            }
+            
+            .stats-container {
+                gap: 10px;
+            }
+            
+            .stat-item {
+                min-width: 45px;
+            }
+            
+            .stat-value {
+                font-size: 12px;
+            }
+            
+            .stat-label {
+                font-size: 9px;
+            }
+            
+            .bullets-container {
+                max-width: 95px;
+            }
+            
+            .bullet-icon {
+                width: 6px;
+                height: 9px;
+            }
+        }
+        
+        /* ТЕЛЕФОНЫ С ВЫРЕЗОМ (iPhone X и новее) */
         @supports (padding: max(0px)) {
             .game-ui-row {
-                bottom: max(env(safe-area-inset-bottom, 20px), 30px);
+                bottom: max(env(safe-area-inset-bottom, 20px), 15px);
             }
             
             .menu-overlay {
-                padding-top: max(env(safe-area-inset-top), 20px);
-                padding-bottom: max(env(safe-area-inset-bottom), 20px);
+                padding-top: max(env(safe-area-inset-top), 15px);
+                padding-bottom: max(env(safe-area-inset-bottom), 15px);
             }
+        }
+        
+        /* iPad и планшеты */
+        @media (min-width: 768px) {
+            .game-ui-row {
+                max-width: 500px;
+                gap: 10px;
+                bottom: max(env(safe-area-inset-bottom, 30px), 20px);
+            }
+            
+            .ui-element {
+                padding: 8px 10px;
+                height: 42px;
+                border-radius: 10px;
+            }
+            
+            .health-container {
+                max-width: 160px;
+            }
+            
+            .health-label {
+                font-size: 12px;
+            }
+            
+            .health-value {
+                font-size: 14px;
+                min-width: 35px;
+            }
+            
+            .health-icons {
+                max-width: 90px;
+            }
+            
+            .health-icon {
+                width: 12px;
+                height: 12px;
+            }
+            
+            .stats-container {
+                gap: 12px;
+            }
+            
+            .stat-item {
+                min-width: 55px;
+            }
+            
+            .stat-value {
+                font-size: 14px;
+            }
+            
+            .stat-label {
+                font-size: 10px;
+            }
+            
+            .bullets-container {
+                max-width: 120px;
+            }
+            
+            .bullets-label {
+                font-size: 12px;
+            }
+            
+            .bullet-icon {
+                width: 7px;
+                height: 10px;
+            }
+            
+            .upgrades-content {
+                max-width: 420px;
+                padding: 20px;
+            }
+            
+            .upgrades-header h1 {
+                font-size: 24px;
+            }
+        }
+        
+        /* ПРЕДОТВРАЩЕНИЕ СМАЗЫВАНИЯ КАСАНИЙ НА IOS */
+        button, .upgrade-btn, .start-game-btn, .restart-game-btn, .reset-progress-btn {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+            cursor: pointer;
+        }
+        
+        /* УЛУЧШЕНИЕ ОТЗЫВЧИВОСТИ КАСАНИЙ */
+        button:active, .upgrade-btn:active, .start-game-btn:active, .restart-game-btn:active, .reset-progress-btn:active {
+            transition: transform 0.1s, background 0.1s;
         }
     </style>
 </head>
@@ -642,9 +924,9 @@
     <div id="gameContainer">
         <canvas id="gameCanvas"></canvas>
         
-        <!-- Компактная строка интерфейса -->
+        <!-- АДАПТИВНАЯ СТРОКА ИНТЕРФЕЙСА -->
         <div class="game-ui-row">
-            <!-- Полоска здоровья -->
+            <!-- Здоровье -->
             <div class="ui-element health-container" id="healthContainer">
                 <div class="health-label">HP</div>
                 <div class="health-value" id="shipHealthText">2/2</div>
