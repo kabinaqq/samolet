@@ -80,7 +80,7 @@
             gap: 8px;
             align-items: center;
             justify-content: center;
-            z-index: 1000; /* Выше врагов */
+            z-index: 1000;
             min-width: 300px;
             max-width: 500px;
             padding: 0 10px;
@@ -99,7 +99,7 @@
             height: 36px;
         }
         
-        /* Полоска здоровья - компактная */
+        /* Новый контейнер здоровья с квадратиками */
         .health-container {
             display: flex;
             align-items: center;
@@ -119,46 +119,34 @@
             color: #00ff88;
             font-weight: 700;
             text-shadow: 0 0 2px rgba(0, 255, 136, 0.5);
-            min-width: 24px;
+            min-width: 30px;
             text-align: center;
         }
         
-        .health-bar {
-            width: 60px;
-            height: 8px;
-            background: rgba(255, 50, 50, 0.2);
-            border-radius: 4px;
-            overflow: hidden;
-            border: 1px solid rgba(255, 50, 50, 0.3);
-        }
-        
-        .health-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #ff3232, #ff9966, #00ff88);
-            width: 100%;
-            transition: width 0.2s ease-out;
-            border-radius: 4px;
-        }
-        
-        /* Деления здоровья */
-        .health-ticks {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+        /* Новые стили для квадратиков здоровья */
+        .health-icons {
             display: flex;
-            pointer-events: none;
+            gap: 3px;
+            align-items: center;
+            flex-wrap: wrap;
+            max-width: 80px;
+            min-height: 24px;
+            justify-content: center;
         }
         
-        .health-tick {
-            flex: 1;
-            height: 100%;
-            border-right: 1px solid rgba(255, 255, 255, 0.2);
+        .health-icon {
+            width: 12px;
+            height: 12px;
+            background: linear-gradient(135deg, #ff3232, #ff9966);
+            border-radius: 2px;
+            box-shadow: 0 0 3px rgba(255, 50, 50, 0.5);
+            transition: all 0.2s ease;
         }
         
-        .health-tick:last-child {
-            border-right: none;
+        .health-icon.lost {
+            background: rgba(255, 50, 50, 0.2);
+            box-shadow: none;
+            transform: scale(0.8);
         }
         
         /* Статистика игры - компактная */
@@ -514,12 +502,16 @@
             
             .health-value {
                 font-size: 11px;
-                min-width: 20px;
+                min-width: 25px;
             }
             
-            .health-bar {
-                width: 50px;
-                height: 6px;
+            .health-icons {
+                max-width: 60px;
+            }
+            
+            .health-icon {
+                width: 10px;
+                height: 10px;
             }
             
             .stats-container {
@@ -562,6 +554,15 @@
             .ui-element {
                 padding: 4px 6px;
                 height: 30px;
+            }
+            
+            .health-icons {
+                max-width: 70px;
+            }
+            
+            .health-icon {
+                width: 11px;
+                height: 11px;
             }
             
             .upgrades-content {
@@ -647,9 +648,8 @@
             <div class="ui-element health-container" id="healthContainer">
                 <div class="health-label">HP</div>
                 <div class="health-value" id="shipHealthText">2/2</div>
-                <div class="health-bar">
-                    <div class="health-fill" id="shipHealthFill"></div>
-                    <div class="health-ticks" id="healthTicks"></div>
+                <div class="health-icons" id="healthIcons">
+                    <!-- Квадратики здоровья будут добавлены через JavaScript -->
                 </div>
             </div>
             
@@ -700,11 +700,11 @@
                 <div class="upgrade-item">
                     <div class="upgrade-header">
                         <div class="upgrade-name">Скорость стрельбы</div>
-                        <div class="upgrade-price" id="startFireRatePrice">30</div>
+                        <div class="upgrade-price" id="startFireRatePrice">25</div>
                     </div>
                     <div class="upgrade-info">
                         <div class="upgrade-level">Уровень: <span id="startFireRateLevel">1</span></div>
-                        <div class="upgrade-desc">-25% задержки</div>
+                        <div class="upgrade-desc">-10% задержки</div>
                     </div>
                     <button class="upgrade-btn" id="startBuyFireRate">Улучшить</button>
                 </div>
@@ -712,11 +712,11 @@
                 <div class="upgrade-item">
                     <div class="upgrade-header">
                         <div class="upgrade-name">Сила выстрела</div>
-                        <div class="upgrade-price" id="startDamagePrice">40</div>
+                        <div class="upgrade-price" id="startDamagePrice">35</div>
                     </div>
                     <div class="upgrade-info">
                         <div class="upgrade-level">Уровень: <span id="startDamageLevel">1</span></div>
-                        <div class="upgrade-desc">+30% урона</div>
+                        <div class="upgrade-desc">+15% урона</div>
                     </div>
                     <button class="upgrade-btn" id="startBuyDamage">Улучшить</button>
                 </div>
@@ -724,7 +724,7 @@
                 <div class="upgrade-item">
                     <div class="upgrade-header">
                         <div class="upgrade-name">Мультивыстрел</div>
-                        <div class="upgrade-price" id="startMultishotPrice">60</div>
+                        <div class="upgrade-price" id="startMultishotPrice">50</div>
                     </div>
                     <div class="upgrade-info">
                         <div class="upgrade-level">Уровень: <span id="startMultishotLevel">1</span></div>
@@ -736,7 +736,7 @@
                 <div class="upgrade-item">
                     <div class="upgrade-header">
                         <div class="upgrade-name">Макс. здоровье</div>
-                        <div class="upgrade-price" id="startHealthPrice">50</div>
+                        <div class="upgrade-price" id="startHealthPrice">40</div>
                     </div>
                     <div class="upgrade-info">
                         <div class="upgrade-level">Уровень: <span id="startHealthLevel">1</span></div>
@@ -790,11 +790,11 @@
                 <div class="upgrade-item">
                     <div class="upgrade-header">
                         <div class="upgrade-name">Скорость стрельбы</div>
-                        <div class="upgrade-price" id="gameOverFireRatePrice">30</div>
+                        <div class="upgrade-price" id="gameOverFireRatePrice">25</div>
                     </div>
                     <div class="upgrade-info">
                         <div class="upgrade-level">Уровень: <span id="gameOverFireRateLevel">1</span></div>
-                        <div class="upgrade-desc">-25% задержки</div>
+                        <div class="upgrade-desc">-10% задержки</div>
                     </div>
                     <button class="upgrade-btn" id="gameOverBuyFireRate">Улучшить</button>
                 </div>
@@ -802,11 +802,11 @@
                 <div class="upgrade-item">
                     <div class="upgrade-header">
                         <div class="upgrade-name">Сила выстрела</div>
-                        <div class="upgrade-price" id="gameOverDamagePrice">40</div>
+                        <div class="upgrade-price" id="gameOverDamagePrice">35</div>
                     </div>
                     <div class="upgrade-info">
                         <div class="upgrade-level">Уровень: <span id="gameOverDamageLevel">1</span></div>
-                        <div class="upgrade-desc">+30% урона</div>
+                        <div class="upgrade-desc">+15% урона</div>
                     </div>
                     <button class="upgrade-btn" id="gameOverBuyDamage">Улучшить</button>
                 </div>
@@ -814,7 +814,7 @@
                 <div class="upgrade-item">
                     <div class="upgrade-header">
                         <div class="upgrade-name">Мультивыстрел</div>
-                        <div class="upgrade-price" id="gameOverMultishotPrice">60</div>
+                        <div class="upgrade-price" id="gameOverMultishotPrice">50</div>
                     </div>
                     <div class="upgrade-info">
                         <div class="upgrade-level">Уровень: <span id="gameOverMultishotLevel">1</span></div>
@@ -826,7 +826,7 @@
                 <div class="upgrade-item">
                     <div class="upgrade-header">
                         <div class="upgrade-name">Макс. здоровье</div>
-                        <div class="upgrade-price" id="gameOverHealthPrice">50</div>
+                        <div class="upgrade-price" id="gameOverHealthPrice">40</div>
                     </div>
                     <div class="upgrade-info">
                         <div class="upgrade-level">Уровень: <span id="gameOverHealthLevel">1</span></div>
@@ -860,14 +860,14 @@
         const targetFPS = 60;
         const fpsCounter = document.getElementById('fpsCounter');
         
-        // Стандартные значения для сброса
+        // Стандартные значения для сброса (с новой экономикой)
         const DEFAULT_GAME_STATE = {
             totalCoins: 50,
             upgrades: {
-                fireRate: { level: 1, cost: 30, value: 400 },
-                damage: { level: 1, cost: 40, value: 10 },
-                multishot: { level: 1, cost: 60, value: 1 },
-                health: { level: 1, cost: 50, value: 2 }
+                fireRate: { level: 1, cost: 25, value: 400 },
+                damage: { level: 1, cost: 35, value: 10 },
+                multishot: { level: 1, cost: 50, value: 1 },
+                health: { level: 1, cost: 40, value: 2 }
             },
             maxHealth: 2
         };
@@ -908,10 +908,10 @@
             touchX: 0,
             isTouching: false,
             upgrades: {
-                fireRate: { level: 1, cost: 30, value: 400 },
-                damage: { level: 1, cost: 40, value: 10 },
-                multishot: { level: 1, cost: 60, value: 1 },
-                health: { level: 1, cost: 50, value: 2 }
+                fireRate: { level: 1, cost: 25, value: 400 },
+                damage: { level: 1, cost: 35, value: 10 },
+                multishot: { level: 1, cost: 50, value: 1 },
+                health: { level: 1, cost: 40, value: 2 }
             },
             stars: [],
             objectPool: {
@@ -942,7 +942,7 @@
                     },
                     maxHealth: game.maxHealth,
                     saveTime: Date.now(),
-                    version: '1.1'
+                    version: '1.2' // Новая версия для новой экономики
                 };
                 
                 localStorage.setItem(SAVE_KEY, JSON.stringify(saveData));
@@ -951,7 +951,7 @@
             }
         }
         
-        // Загрузка прогресса
+        // Загрузка прогресса с поддержкой старой версии
         function loadGame() {
             try {
                 const savedData = localStorage.getItem(SAVE_KEY);
@@ -959,31 +959,48 @@
                 if (savedData) {
                     const parsedData = JSON.parse(savedData);
                     
-                    if (parsedData.version === '1.0' || parsedData.version === '1.1') {
+                    // Поддержка старых версий
+                    if (parsedData.version === '1.0' || parsedData.version === '1.1' || parsedData.version === '1.2') {
                         game.totalCoins = parsedData.totalCoins || DEFAULT_GAME_STATE.totalCoins;
                         
                         if (parsedData.upgrades) {
+                            // Загрузка скорости стрельбы
                             if (parsedData.upgrades.fireRate) {
                                 game.upgrades.fireRate.level = parsedData.upgrades.fireRate.level || 1;
-                                game.upgrades.fireRate.cost = parsedData.upgrades.fireRate.cost || 30;
+                                // Пересчет стоимости для новой экономики
+                                game.upgrades.fireRate.cost = Math.max(25, 
+                                    parsedData.upgrades.fireRate.cost ? 
+                                    Math.round(parsedData.upgrades.fireRate.cost * 25/30) : 25);
                                 game.upgrades.fireRate.value = parsedData.upgrades.fireRate.value || 400;
                             }
                             
+                            // Загрузка силы выстрела
                             if (parsedData.upgrades.damage) {
                                 game.upgrades.damage.level = parsedData.upgrades.damage.level || 1;
-                                game.upgrades.damage.cost = parsedData.upgrades.damage.cost || 40;
+                                // Пересчет стоимости для новой экономики
+                                game.upgrades.damage.cost = Math.max(35, 
+                                    parsedData.upgrades.damage.cost ? 
+                                    Math.round(parsedData.upgrades.damage.cost * 35/40) : 35);
                                 game.upgrades.damage.value = parsedData.upgrades.damage.value || 10;
                             }
                             
+                            // Загрузка мультивыстрела
                             if (parsedData.upgrades.multishot) {
                                 game.upgrades.multishot.level = parsedData.upgrades.multishot.level || 1;
-                                game.upgrades.multishot.cost = parsedData.upgrades.multishot.cost || 60;
+                                // Пересчет стоимости для новой экономики
+                                game.upgrades.multishot.cost = Math.max(50, 
+                                    parsedData.upgrades.multishot.cost ? 
+                                    Math.round(parsedData.upgrades.multishot.cost * 50/60) : 50);
                                 game.upgrades.multishot.value = parsedData.upgrades.multishot.value || 1;
                             }
                             
+                            // Загрузка здоровья
                             if (parsedData.upgrades.health) {
                                 game.upgrades.health.level = parsedData.upgrades.health.level || 1;
-                                game.upgrades.health.cost = parsedData.upgrades.health.cost || 50;
+                                // Пересчет стоимости для новой экономики
+                                game.upgrades.health.cost = Math.max(40, 
+                                    parsedData.upgrades.health.cost ? 
+                                    Math.round(parsedData.upgrades.health.cost * 40/50) : 40);
                                 game.upgrades.health.value = parsedData.upgrades.health.value || 2;
                             }
                         }
@@ -1312,32 +1329,45 @@
             }
         }
         
-        // Создание противника
+        // Создание противника - БОЛЕЕ СЛОЖНЫЕ ВРАГИ СО ВРЕМЕНЕМ
         function createEnemy() {
-            const waveModifier = Math.min(12, game.wave * 0.3);
-            const size = 20 + Math.random() * 10 + waveModifier * 0.5;
+            const waveModifier = Math.min(20, game.wave * 0.5); // Увеличил множитель
+            
+            // Размер врага зависит от волны (больше на поздних волнах)
+            const size = 35 + Math.min(15, Math.floor(game.wave / 5)); // Увеличивается с волнами
             
             let enemyType = 'normal';
             let speedMultiplier = 1;
             let healthMultiplier = 1;
+            let damageMultiplier = 1; // Новый параметр - урон от врага
             
-            // ОЧЕНЬ РЕДКИЕ особые враги
-            if (game.wave >= 5 && Math.random() < 0.03) {
-                enemyType = 'fast';
-                speedMultiplier = 1.5;
-                healthMultiplier = 0.7;
-            } else if (game.wave >= 8 && Math.random() < 0.015) {
-                enemyType = 'tank';
-                speedMultiplier = 0.8;
-                healthMultiplier = 1.8;
-            } else if (game.wave >= 12 && Math.random() < 0.008) {
-                enemyType = 'boss';
-                speedMultiplier = 0.6;
-                healthMultiplier = 2.5;
+            // Более частое появление особых врагов на поздних волнах
+            const specialEnemyChance = Math.min(0.15, 0.03 + (game.wave * 0.01));
+            
+            if (game.wave >= 3 && Math.random() < specialEnemyChance) {
+                const rand = Math.random();
+                if (rand < 0.4) {
+                    enemyType = 'fast';
+                    speedMultiplier = 1.8 + (game.wave * 0.02); // Ускоряется с волнами
+                    healthMultiplier = 0.6;
+                    damageMultiplier = 1.2;
+                } else if (rand < 0.7) {
+                    enemyType = 'tank';
+                    speedMultiplier = 0.7 + (game.wave * 0.01);
+                    healthMultiplier = 2.2 + (game.wave * 0.05); // Больше здоровья с волнами
+                    damageMultiplier = 1.5;
+                } else {
+                    enemyType = 'boss';
+                    speedMultiplier = 0.5 + (game.wave * 0.008);
+                    healthMultiplier = 3.0 + (game.wave * 0.08); // Значительно больше здоровья
+                    damageMultiplier = 2.0;
+                }
             }
             
-            const baseHealth = 12 + waveModifier * 1.5;
+            // Базовая статистика увеличивается с волнами
+            const baseHealth = 20 + waveModifier * 3;
             const health = Math.floor(baseHealth * healthMultiplier);
+            
             const colors = {
                 normal: '#ff5555',
                 fast: '#ff8855',
@@ -1352,11 +1382,12 @@
                 enemy.y = -size - 10;
                 enemy.width = size;
                 enemy.height = size;
-                enemy.speed = (game.constants.enemyBaseSpeed + waveModifier * 5) * speedMultiplier;
+                enemy.speed = (game.constants.enemyBaseSpeed + waveModifier * 8) * speedMultiplier; // Увеличил рост скорости
                 enemy.health = health;
                 enemy.maxHealth = health;
                 enemy.color = colors[enemyType];
-                enemy.value = 1 + Math.floor(waveModifier / 4) * (enemyType === 'boss' ? 2 : enemyType === 'tank' ? 1 : 0.5);
+                enemy.damage = damageMultiplier; // Сохраняем множитель урона
+                enemy.value = 3 + Math.floor(waveModifier / 2) * (enemyType === 'boss' ? 4 : enemyType === 'tank' ? 3 : enemyType === 'fast' ? 2 : 1);
                 enemy.type = enemyType;
                 enemy.hitbox = {
                     x: enemy.x,
@@ -1370,11 +1401,12 @@
                     y: -size - 10,
                     width: size,
                     height: size,
-                    speed: (game.constants.enemyBaseSpeed + waveModifier * 5) * speedMultiplier,
+                    speed: (game.constants.enemyBaseSpeed + waveModifier * 8) * speedMultiplier,
                     health: health,
                     maxHealth: health,
                     color: colors[enemyType],
-                    value: 1 + Math.floor(waveModifier / 4) * (enemyType === 'boss' ? 2 : enemyType === 'tank' ? 1 : 0.5),
+                    damage: damageMultiplier,
+                    value: 3 + Math.floor(waveModifier / 2) * (enemyType === 'boss' ? 4 : enemyType === 'tank' ? 3 : enemyType === 'fast' ? 2 : 1),
                     type: enemyType,
                     hitbox: {
                         x: 0,
@@ -1384,6 +1416,19 @@
                     }
                 };
                 updateEnemyHitbox(enemy);
+            }
+            
+            // Добавляем специальные способности для врагов на высоких волнах
+            if (game.wave >= 10 && enemy.type !== 'normal') {
+                enemy.specialAbility = true;
+                if (enemy.type === 'fast') {
+                    enemy.speed *= 1.3; // Еще быстрее
+                } else if (enemy.type === 'tank') {
+                    enemy.health = Math.floor(enemy.health * 1.5);
+                    enemy.maxHealth = enemy.health;
+                } else if (enemy.type === 'boss') {
+                    enemy.value *= 2; // Двойная награда
+                }
             }
             
             game.enemies.push(enemy);
@@ -1397,11 +1442,11 @@
             enemy.hitbox.height = enemy.height;
         }
         
-        // Отрисовка противника
+        // Отрисовка противника С КВАДРАТИКАМИ HP
         function drawEnemy(enemy) {
             updateEnemyHitbox(enemy);
             
-            const cornerRadius = 6;
+            const cornerRadius = 8;
             
             ctx.fillStyle = enemy.color;
             ctx.beginPath();
@@ -1410,11 +1455,11 @@
             
             ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
             ctx.beginPath();
-            ctx.roundRect(enemy.x + 2, enemy.y + 2, enemy.width - 4, enemy.height - 4, cornerRadius - 1);
+            ctx.roundRect(enemy.x + 3, enemy.y + 3, enemy.width - 6, enemy.height - 6, cornerRadius - 1);
             ctx.fill();
             
             ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 9px Arial';
+            ctx.font = 'bold 11px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             
@@ -1425,24 +1470,35 @@
             
             ctx.fillText(icon, enemy.x + enemy.width / 2, enemy.y + enemy.height / 2);
             
-            // Полоска здоровья (только для особых врагов)
-            if (enemy.type !== 'normal') {
-                const healthPercent = enemy.health / enemy.maxHealth;
-                const barWidth = enemy.width;
-                const barHeight = 2;
-                const barY = enemy.y - barHeight - 1;
+            // КВАДРАТИКИ ЗДОРОВЬЯ ДЛЯ ВСЕХ ВРАГОВ
+            const healthPercent = enemy.health / enemy.maxHealth;
+            const maxHealthIcons = Math.min(8, Math.ceil(enemy.maxHealth / 10)); // Максимум 8 иконок
+            const healthIconsCount = Math.ceil(maxHealthIcons * healthPercent);
+            const iconSize = 4;
+            const spacing = 2;
+            const totalWidth = maxHealthIcons * (iconSize + spacing) - spacing;
+            const startX = enemy.x + (enemy.width - totalWidth) / 2;
+            const barY = enemy.y - iconSize - 4;
+            
+            // Рисуем иконки здоровья
+            for (let i = 0; i < maxHealthIcons; i++) {
+                const iconX = startX + i * (iconSize + spacing);
                 
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
-                ctx.fillRect(enemy.x, barY, barWidth, barHeight);
+                // Фон иконки
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                ctx.fillRect(iconX, barY, iconSize, iconSize);
                 
-                if (healthPercent > 0.6) {
-                    ctx.fillStyle = '#00ff88';
-                } else if (healthPercent > 0.3) {
-                    ctx.fillStyle = '#ffaa00';
-                } else {
-                    ctx.fillStyle = '#ff5555';
+                // Заполненная часть
+                if (i < healthIconsCount) {
+                    if (healthPercent > 0.6) {
+                        ctx.fillStyle = '#00ff88';
+                    } else if (healthPercent > 0.3) {
+                        ctx.fillStyle = '#ffaa00';
+                    } else {
+                        ctx.fillStyle = '#ff5555';
+                    }
+                    ctx.fillRect(iconX + 1, barY + 1, iconSize - 2, iconSize - 2);
                 }
-                ctx.fillRect(enemy.x, barY, barWidth * healthPercent, barHeight);
             }
         }
         
@@ -1456,12 +1512,23 @@
         
         // Обработка столкновения с врагом
         function handleCollisionWithEnemy(enemy) {
-            // Отнимаем 1 HP
-            game.playerHealth -= 1;
+            // Отнимаем HP в зависимости от типа врага и волны
+            let damageTaken = 1;
+            if (enemy.damage) {
+                damageTaken = Math.max(1, Math.floor(enemy.damage));
+            }
             
-            // Если прокачан мультивыстрел, отнимаем 1 пулю (но не меньше 1)
-            if (game.upgrades.multishot.value > 1) {
-                game.upgrades.multishot.value = Math.max(1, game.upgrades.multishot.value - 1);
+            // Увеличиваем урон на поздних волнах
+            if (game.wave >= 10) {
+                damageTaken += Math.floor(game.wave / 10);
+            }
+            
+            game.playerHealth -= damageTaken;
+            
+            // Если прокачан мультивыстрел, отнимаем пули пропорционально урону
+            if (game.upgrades.multishot.value > 1 && damageTaken > 1) {
+                const bulletsLost = Math.min(game.upgrades.multishot.value - 1, damageTaken - 1);
+                game.upgrades.multishot.value = Math.max(1, game.upgrades.multishot.value - bulletsLost);
                 updateBulletsIndicator();
             }
             
@@ -1520,19 +1587,79 @@
             }
         }
         
-        // Обновление делений здоровья
-        function updateHealthTicks() {
-            const ticksContainer = document.getElementById('healthTicks');
-            if (!ticksContainer) return;
+        // Обновление отображения здоровья квадратиками
+        function updateHealthDisplay() {
+            const healthText = document.getElementById('shipHealthText');
+            const iconsContainer = document.getElementById('healthIcons');
             
-            ticksContainer.innerHTML = '';
-            
-            // Создаем деления для каждого HP
-            for (let i = 0; i < game.maxHealth; i++) {
-                const tick = document.createElement('div');
-                tick.className = 'health-tick';
-                ticksContainer.appendChild(tick);
+            if (healthText) {
+                healthText.textContent = `${game.playerHealth}/${game.maxHealth}`;
+                healthText.style.color = game.playerHealth > game.maxHealth * 0.5 ? '#88ffaa' : 
+                                         game.playerHealth > game.maxHealth * 0.25 ? '#ffcc66' : '#ff8888';
             }
+            
+            if (iconsContainer) {
+                // Очищаем существующие иконки
+                iconsContainer.innerHTML = '';
+                
+                // Определяем максимальное количество отображаемых иконок
+                // Для большого количества HP показываем пропорционально меньше иконок
+                let maxIconsToShow;
+                if (game.maxHealth <= 10) {
+                    maxIconsToShow = game.maxHealth;
+                } else if (game.maxHealth <= 20) {
+                    maxIconsToShow = Math.min(15, game.maxHealth);
+                } else {
+                    maxIconsToShow = 20; // Максимум 20 иконок
+                }
+                
+                // Вычисляем шаг для отображения (сколько HP на одну иконку)
+                const healthPerIcon = game.maxHealth / maxIconsToShow;
+                
+                // Определяем размер иконок в зависимости от количества
+                const baseSize = 12;
+                const minSize = 8;
+                const size = Math.max(minSize, baseSize - Math.max(0, (maxIconsToShow - 10) * 0.3));
+                
+                // Создаем иконки
+                for (let i = 0; i < maxIconsToShow; i++) {
+                    const healthIcon = document.createElement('div');
+                    healthIcon.className = 'health-icon';
+                    
+                    // Устанавливаем размер через стили
+                    healthIcon.style.width = `${size}px`;
+                    healthIcon.style.height = `${size}px`;
+                    
+                    // Определяем, сколько HP представляет эта иконка
+                    const iconStartHP = i * healthPerIcon;
+                    const iconEndHP = (i + 1) * healthPerIcon;
+                    
+                    // Проверяем, заполнена ли эта иконка
+                    if (game.playerHealth >= iconEndHP) {
+                        // Полностью заполнена
+                        healthIcon.style.background = 'linear-gradient(135deg, #00ff88, #00cc66)';
+                        healthIcon.style.boxShadow = '0 0 3px rgba(0, 255, 136, 0.5)';
+                    } else if (game.playerHealth > iconStartHP) {
+                        // Частично заполнена
+                        const fillPercent = (game.playerHealth - iconStartHP) / healthPerIcon;
+                        if (fillPercent > 0.5) {
+                            healthIcon.style.background = 'linear-gradient(135deg, #ffaa00, #ffcc66)';
+                            healthIcon.style.boxShadow = '0 0 3px rgba(255, 170, 0, 0.5)';
+                        } else {
+                            healthIcon.style.background = 'linear-gradient(135deg, #ff3232, #ff6666)';
+                            healthIcon.style.boxShadow = '0 0 3px rgba(255, 50, 50, 0.5)';
+                        }
+                    } else {
+                        // Пустая
+                        healthIcon.classList.add('lost');
+                    }
+                    
+                    iconsContainer.appendChild(healthIcon);
+                }
+            }
+            
+            // Обновляем индикатор пуль
+            updateBulletsIndicator();
         }
         
         // Обновление игры с deltaTime
@@ -1577,17 +1704,20 @@
             // Автоматическая стрельба
             autoShoot();
             
-            // Обновление волн с deltaTime
+            // Обновление волн с deltaTime - ВОЛНЫ СТАНОВЯТСЯ КОРОЧЕ
             game.waveTimer += game.constants.waveTimerSpeed * deltaTime * 60;
             
-            const waveDuration = Math.max(50, 70 - game.wave * 0.2);
+            const waveDuration = Math.max(40, 60 - game.wave * 0.3); // Волны становятся короче
             if (game.waveTimer > waveDuration) {
                 game.wave++;
                 game.waveTimer = 0;
                 updateDisplay('waveValue', game.wave);
                 
-                if (game.wave % 4 === 0) {
-                    const bonus = 2 + Math.floor(game.wave / 8);
+                // Увеличиваем базовую скорость врагов с каждой волной
+                game.constants.enemyBaseSpeed = 90 + (game.wave * 1.5);
+                
+                if (game.wave % 3 === 0) {
+                    const bonus = 4 + Math.floor(game.wave / 4); // Увеличиваем бонус
                     game.totalCoins += bonus;
                     game.coinsEarned += bonus;
                     updateAllDisplays();
@@ -1597,14 +1727,17 @@
             // Создание врагов с deltaTime
             game.enemySpawnTimer += game.constants.enemySpawnSpeed * deltaTime * 60;
             
-            const spawnDelay = Math.max(2.0, 4.0 - game.wave * 0.02);
+            const spawnDelay = Math.max(1.5, 3.0 - game.wave * 0.03); // Враги появляются чаще
             if (game.enemySpawnTimer > spawnDelay) {
                 createEnemy();
                 game.enemySpawnTimer = 0;
                 
-                // ОЧЕНЬ редкие дополнительные враги
-                if (game.wave >= 8 && Math.random() < 0.05) {
-                    setTimeout(() => createEnemy(), 1000);
+                // Дополнительные враги на поздних волнах
+                if (game.wave >= 5 && Math.random() < 0.1) {
+                    setTimeout(() => createEnemy(), 800);
+                }
+                if (game.wave >= 10 && Math.random() < 0.08) {
+                    setTimeout(() => createEnemy(), 1600);
                 }
             }
             
@@ -1630,17 +1763,23 @@
                         
                         if (enemy.health <= 0) {
                             let coinsEarned = enemy.value;
-                            let scoreEarned = 6 + game.wave * 1.2;
+                            let scoreEarned = 10 + game.wave * 2; // Увеличил очки
                             
                             if (enemy.type === 'fast') {
-                                coinsEarned += 0.5;
-                                scoreEarned += 2;
+                                coinsEarned += 2;
+                                scoreEarned += 5;
                             } else if (enemy.type === 'tank') {
-                                coinsEarned += 1;
-                                scoreEarned += 3;
-                            } else if (enemy.type === 'boss') {
                                 coinsEarned += 3;
-                                scoreEarned += 10;
+                                scoreEarned += 8;
+                            } else if (enemy.type === 'boss') {
+                                coinsEarned += 8;
+                                scoreEarned += 20;
+                            }
+                            
+                            // Бонус за специальных врагов
+                            if (enemy.specialAbility) {
+                                coinsEarned += 2;
+                                scoreEarned += 5;
                             }
                             
                             game.score += Math.round(scoreEarned);
@@ -1687,19 +1826,19 @@
             // Взрыв
             ctx.fillStyle = 'rgba(255, 100, 100, 0.6)';
             ctx.beginPath();
-            ctx.arc(x, y, 20, 0, Math.PI * 2);
+            ctx.arc(x, y, 25, 0, Math.PI * 2); // Увеличил размер взрыва для больших врагов
             ctx.fill();
             
             // Осколки
-            for (let i = 0; i < 6; i++) {
+            for (let i = 0; i < 8; i++) { // Больше осколков
                 const angle = Math.random() * Math.PI * 2;
-                const distance = 10 + Math.random() * 15;
+                const distance = 15 + Math.random() * 20;
                 const fragmentX = x + Math.cos(angle) * distance;
                 const fragmentY = y + Math.sin(angle) * distance;
                 
                 ctx.fillStyle = `rgba(255, ${150 + Math.random() * 105}, 0, 0.6)`;
                 ctx.beginPath();
-                ctx.arc(fragmentX, fragmentY, 2 + Math.random() * 3, 0, Math.PI * 2);
+                ctx.arc(fragmentX, fragmentY, 3 + Math.random() * 4, 0, Math.PI * 2);
                 ctx.fill();
             }
         }
@@ -1720,12 +1859,12 @@
                 ctx.shadowBlur = 0;
             }
             
-            // Враги
+            // Враги (рисуем после пуль, чтобы были поверх)
             for (let i = 0; i < game.enemies.length; i++) {
                 drawEnemy(game.enemies[i]);
             }
             
-            // Игрок
+            // Игрок (рисуем последним, чтобы был поверх всего)
             drawPlayer();
         }
         
@@ -1743,26 +1882,6 @@
             if (element) {
                 element.textContent = value;
             }
-        }
-        
-        function updateHealthDisplay() {
-            const healthPercent = Math.max(0, game.playerHealth / game.maxHealth);
-            const healthFill = document.getElementById('shipHealthFill');
-            const healthText = document.getElementById('shipHealthText');
-            
-            if (healthFill) {
-                healthFill.style.width = `${healthPercent * 100}%`;
-            }
-            if (healthText) {
-                healthText.textContent = `${game.playerHealth}/${game.maxHealth}`;
-                healthText.style.color = healthPercent > 0.5 ? '#88ffaa' : '#ff8888';
-            }
-            
-            // Обновляем деления здоровья
-            updateHealthTicks();
-            
-            // Обновляем индикатор пуль
-            updateBulletsIndicator();
         }
         
         // Обновление меню
@@ -1814,7 +1933,7 @@
             }
         }
         
-        // Покупка улучшения
+        // Покупка улучшения с новыми значениями
         function buyUpgrade(type) {
             const upgrade = game.upgrades[type];
             
@@ -1823,19 +1942,21 @@
                 
                 switch(type) {
                     case 'fireRate':
-                        upgrade.value = Math.max(100, upgrade.value * 0.75);
+                        // -10% задержки вместо -25%
+                        upgrade.value = Math.max(150, upgrade.value * 0.9); // Минимум 150мс
                         upgrade.level++;
-                        upgrade.cost = Math.floor(upgrade.cost * (1.4 + upgrade.level * 0.08));
+                        upgrade.cost = Math.floor(upgrade.cost * (1.3 + upgrade.level * 0.06)); // Меньший рост стоимости
                         break;
                     case 'damage':
-                        upgrade.value = Math.floor(upgrade.value * 1.3);
+                        // +15% урона вместо +30%
+                        upgrade.value = Math.floor(upgrade.value * 1.15);
                         upgrade.level++;
-                        upgrade.cost = Math.floor(upgrade.cost * (1.5 + upgrade.level * 0.12));
+                        upgrade.cost = Math.floor(upgrade.cost * (1.35 + upgrade.level * 0.08)); // Меньший рост стоимости
                         break;
                     case 'multishot':
                         upgrade.value++;
                         upgrade.level++;
-                        upgrade.cost = Math.floor(upgrade.cost * (1.8 + upgrade.level * 0.15));
+                        upgrade.cost = Math.floor(upgrade.cost * (1.6 + upgrade.level * 0.1)); // Меньший рост стоимости
                         updatePlayerWidth();
                         updatePlayerHitbox();
                         break;
@@ -1844,7 +1965,7 @@
                         game.playerHealth = game.maxHealth;
                         upgrade.value = game.maxHealth;
                         upgrade.level++;
-                        upgrade.cost = Math.floor(upgrade.cost * (1.6 + upgrade.level * 0.1));
+                        upgrade.cost = Math.floor(upgrade.cost * (1.4 + upgrade.level * 0.07)); // Меньший рост стоимости
                         break;
                 }
                 
@@ -1862,7 +1983,7 @@
             game.upgrades.multishot.value = game.upgrades.multishot.level;
             
             if (game.wave >= 5) {
-                const bonus = Math.floor(game.wave / 4);
+                const bonus = Math.floor(game.wave / 2.5); // Увеличил бонус за конец игры
                 game.totalCoins += bonus;
                 game.coinsEarned += bonus;
             }
@@ -1895,6 +2016,9 @@
             game.waveTimer = 0;
             game.enemySpawnTimer = 0;
             lastFrameTime = 0;
+            
+            // Восстанавливаем базовую скорость врагов
+            game.constants.enemyBaseSpeed = 90;
             
             // Восстанавливаем мультивыстрел до сохраненного уровня
             game.upgrades.multishot.value = game.upgrades.multishot.level;
