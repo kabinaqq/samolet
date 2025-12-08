@@ -83,7 +83,7 @@
             justify-content: center;
             z-index: 1000;
             width: calc(100% - 20px);
-            max-width: 400px;
+            max-width: 500px;
             padding: 0 8px;
         }
         
@@ -96,102 +96,23 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
             display: flex;
             align-items: center;
-            padding: 5px 6px;
-            height: 34px;
+            padding: 6px 10px;
+            height: 40px;
             flex-shrink: 0;
         }
         
-        /* Контейнер здоровья с квадратиками */
-        .health-container {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            min-width: 0;
-            flex: 1;
-            max-width: 130px;
-        }
-        
-        .health-label {
-            font-size: 9px;
-            color: #ff8888;
-            font-weight: 600;
-            white-space: nowrap;
-            flex-shrink: 0;
-        }
-        
-        .health-value {
-            font-size: 11px;
-            color: #00ff88;
-            font-weight: 700;
-            text-shadow: 0 0 2px rgba(0, 255, 136, 0.5);
-            min-width: 28px;
-            text-align: center;
-            flex-shrink: 0;
-        }
-        
-        /* Квадратики здоровья */
-        .health-icons {
-            display: flex;
-            gap: 2px;
-            align-items: center;
-            flex-wrap: wrap;
-            max-width: 70px;
-            min-height: 22px;
-            justify-content: center;
-            flex: 1;
-        }
-        
-        .health-icon {
-            width: 10px;
-            height: 10px;
-            background: linear-gradient(135deg, #ff3232, #ff9966);
-            border-radius: 1px;
-            box-shadow: 0 0 2px rgba(255, 50, 50, 0.5);
-            transition: all 0.2s ease;
-            flex-shrink: 0;
-        }
-        
-        .health-icon.lost {
-            background: rgba(255, 50, 50, 0.2);
-            box-shadow: none;
-            transform: scale(0.8);
-        }
-        
-        /* Статистика игры */
-        .stats-container {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 0 6px;
-            flex: 2;
-            min-width: 0;
-            justify-content: center;
-        }
-        
-        .stat-item {
+        /* ОБЩИЙ СТИЛЬ ДЛЯ ВСЕЙ СТАТИСТИКИ */
+        .stat-container {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-width: 40px;
+            min-width: 60px;
             flex: 1;
         }
         
-        .stat-value {
-            font-size: 11px;
-            font-weight: 700;
-            color: #00ff88;
-            text-shadow: 0 0 2px rgba(0, 255, 136, 0.5);
-            line-height: 1.1;
-            margin-bottom: 1px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 100%;
-        }
-        
         .stat-label {
-            font-size: 8px;
+            font-size: 9px;
             color: #88aaff;
             text-transform: uppercase;
             letter-spacing: 0.1px;
@@ -201,47 +122,67 @@
             overflow: hidden;
             text-overflow: ellipsis;
             max-width: 100%;
+            margin-bottom: 2px;
         }
         
-        /* Индикатор пуль */
-        .bullets-container {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            min-width: 0;
-            flex: 1;
-            max-width: 90px;
-        }
-        
-        .bullets-label {
-            font-size: 9px;
-            color: #88aaff;
-            font-weight: 600;
+        .stat-value {
+            font-size: 14px;
+            font-weight: 700;
+            text-shadow: 0 0 3px rgba(0, 255, 136, 0.5);
+            line-height: 1.1;
             white-space: nowrap;
-            flex-shrink: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
         }
         
-        .bullets-icons {
-            display: flex;
-            gap: 2px;
-            align-items: center;
-            flex-wrap: wrap;
-            justify-content: center;
-            flex: 1;
+        /* ЦВЕТА ДЛЯ РАЗНЫХ ТИПОВ СТАТИСТИКИ */
+        .health-stat .stat-label {
+            color: #ff8888;
         }
         
-        .bullet-icon {
-            width: 5px;
-            height: 8px;
-            background: #00ff88;
-            border-radius: 1px;
-            box-shadow: 0 0 1px rgba(0, 255, 136, 0.5);
-            flex-shrink: 0;
+        .health-stat .stat-value {
+            color: #00ff88;
         }
         
-        .bullet-icon.lost {
-            background: rgba(255, 50, 50, 0.3);
-            box-shadow: none;
+        .score-stat .stat-label {
+            color: #88aaff;
+        }
+        
+        .score-stat .stat-value {
+            color: #00ff88;
+        }
+        
+        .coins-stat .stat-label {
+            color: #ffcc00;
+        }
+        
+        .coins-stat .stat-value {
+            color: #ffcc00;
+        }
+        
+        .wave-stat .stat-label {
+            color: #ff88ff;
+        }
+        
+        .wave-stat .stat-value {
+            color: #ff88ff;
+        }
+        
+        .kills-stat .stat-label {
+            color: #ffaa88;
+        }
+        
+        .kills-stat .stat-value {
+            color: #ffaa88;
+        }
+        
+        .bullets-stat .stat-label {
+            color: #88ffaa;
+        }
+        
+        .bullets-stat .stat-value {
+            color: #88ffaa;
         }
         
         /* Меню улучшений - ПОЛНОСТЬЮ АДАПТИВНОЕ */
@@ -526,47 +467,20 @@
             }
             
             .ui-element {
-                padding: 4px 5px;
-                height: 32px;
+                padding: 5px 8px;
+                height: 38px;
             }
             
-            .health-container {
-                max-width: 120px;
-            }
-            
-            .health-icons {
-                max-width: 65px;
-            }
-            
-            .health-icon {
-                width: 9px;
-                height: 9px;
-            }
-            
-            .stats-container {
-                gap: 6px;
-                padding: 0 5px;
-            }
-            
-            .stat-item {
-                min-width: 35px;
-            }
-            
-            .stat-value {
-                font-size: 10px;
+            .stat-container {
+                min-width: 55px;
             }
             
             .stat-label {
-                font-size: 7px;
+                font-size: 8px;
             }
             
-            .bullets-container {
-                max-width: 80px;
-            }
-            
-            .bullet-icon {
-                width: 4px;
-                height: 7px;
+            .stat-value {
+                font-size: 13px;
             }
         }
         
@@ -577,51 +491,24 @@
                 gap: 8px;
                 padding: 0 10px;
                 width: calc(100% - 20px);
-                max-width: 500px;
+                max-width: 600px;
             }
             
             .ui-element {
-                padding: 5px 8px;
-                height: 36px;
+                padding: 6px 10px;
+                height: 42px;
             }
             
-            .health-container {
-                max-width: 140px;
-            }
-            
-            .health-icons {
-                max-width: 80px;
-            }
-            
-            .health-icon {
-                width: 11px;
-                height: 11px;
-            }
-            
-            .stats-container {
-                gap: 10px;
-                padding: 0 8px;
-            }
-            
-            .stat-item {
-                min-width: 45px;
-            }
-            
-            .stat-value {
-                font-size: 12px;
+            .stat-container {
+                min-width: 65px;
             }
             
             .stat-label {
                 font-size: 9px;
             }
             
-            .bullets-container {
-                max-width: 100px;
-            }
-            
-            .bullet-icon {
-                width: 6px;
-                height: 9px;
+            .stat-value {
+                font-size: 15px;
             }
             
             /* Меню в альбомной ориентации */
@@ -653,64 +540,22 @@
             }
             
             .ui-element {
-                padding: 3px 4px;
-                height: 30px;
+                padding: 4px 6px;
+                height: 36px;
                 border-radius: 6px;
             }
             
-            .health-container {
-                gap: 3px;
-                max-width: 110px;
-            }
-            
-            .health-label {
-                font-size: 8px;
-            }
-            
-            .health-value {
-                font-size: 10px;
-                min-width: 24px;
-            }
-            
-            .health-icons {
-                max-width: 60px;
-                gap: 1px;
-            }
-            
-            .health-icon {
-                width: 8px;
-                height: 8px;
-            }
-            
-            .stats-container {
-                gap: 4px;
-                padding: 0 3px;
-            }
-            
-            .stat-item {
-                min-width: 32px;
-            }
-            
-            .stat-value {
-                font-size: 9px;
+            .stat-container {
+                min-width: 50px;
             }
             
             .stat-label {
-                font-size: 6px;
+                font-size: 7px;
+                margin-bottom: 1px;
             }
             
-            .bullets-container {
-                max-width: 70px;
-                gap: 3px;
-            }
-            
-            .bullets-label {
-                font-size: 8px;
-            }
-            
-            .bullet-icon {
-                width: 3px;
-                height: 6px;
+            .stat-value {
+                font-size: 12px;
             }
             
             /* Меню для маленьких экранов */
@@ -762,58 +607,24 @@
             .game-ui-row {
                 gap: 8px;
                 padding: 0 12px;
-                max-width: 420px;
+                max-width: 550px;
             }
             
             .ui-element {
-                padding: 6px 8px;
-                height: 38px;
+                padding: 7px 10px;
+                height: 44px;
             }
             
-            .health-container {
-                max-width: 140px;
-            }
-            
-            .health-label {
-                font-size: 10px;
-            }
-            
-            .health-value {
-                font-size: 12px;
-            }
-            
-            .health-icons {
-                max-width: 75px;
-            }
-            
-            .health-icon {
-                width: 11px;
-                height: 11px;
-            }
-            
-            .stats-container {
-                gap: 10px;
-            }
-            
-            .stat-item {
-                min-width: 45px;
-            }
-            
-            .stat-value {
-                font-size: 12px;
+            .stat-container {
+                min-width: 70px;
             }
             
             .stat-label {
-                font-size: 9px;
+                font-size: 10px;
             }
             
-            .bullets-container {
-                max-width: 95px;
-            }
-            
-            .bullet-icon {
-                width: 6px;
-                height: 9px;
+            .stat-value {
+                font-size: 16px;
             }
         }
         
@@ -832,66 +643,27 @@
         /* iPad и планшеты */
         @media (min-width: 768px) {
             .game-ui-row {
-                max-width: 500px;
+                max-width: 700px;
                 gap: 10px;
                 bottom: max(env(safe-area-inset-bottom, 30px), 20px);
             }
             
             .ui-element {
-                padding: 8px 10px;
-                height: 42px;
+                padding: 8px 12px;
+                height: 50px;
                 border-radius: 10px;
             }
             
-            .health-container {
-                max-width: 160px;
-            }
-            
-            .health-label {
-                font-size: 12px;
-            }
-            
-            .health-value {
-                font-size: 14px;
-                min-width: 35px;
-            }
-            
-            .health-icons {
-                max-width: 90px;
-            }
-            
-            .health-icon {
-                width: 12px;
-                height: 12px;
-            }
-            
-            .stats-container {
-                gap: 12px;
-            }
-            
-            .stat-item {
-                min-width: 55px;
-            }
-            
-            .stat-value {
-                font-size: 14px;
+            .stat-container {
+                min-width: 80px;
             }
             
             .stat-label {
-                font-size: 10px;
+                font-size: 11px;
             }
             
-            .bullets-container {
-                max-width: 120px;
-            }
-            
-            .bullets-label {
-                font-size: 12px;
-            }
-            
-            .bullet-icon {
-                width: 7px;
-                height: 10px;
+            .stat-value {
+                font-size: 18px;
             }
             
             .upgrades-content {
@@ -927,40 +699,39 @@
         <!-- АДАПТИВНАЯ СТРОКА ИНТЕРФЕЙСА -->
         <div class="game-ui-row">
             <!-- Здоровье -->
-            <div class="ui-element health-container" id="healthContainer">
-                <div class="health-label">HP</div>
-                <div class="health-value" id="shipHealthText">2/2</div>
-                <div class="health-icons" id="healthIcons">
-                    <!-- Квадратики здоровья будут добавлены через JavaScript -->
-                </div>
+            <div class="ui-element stat-container health-stat" id="healthContainer">
+                <div class="stat-label">ХП</div>
+                <div class="stat-value" id="shipHealthText">2/2</div>
             </div>
             
-            <!-- Статистика игры -->
-            <div class="ui-element stats-container">
-                <div class="stat-item">
-                    <div class="stat-value" id="scoreValue">0</div>
-                    <div class="stat-label">Очки</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="coinsValue">50</div>
-                    <div class="stat-label">Монеты</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="waveValue">1</div>
-                    <div class="stat-label">Волна</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="killsValue">0</div>
-                    <div class="stat-label">Убито</div>
-                </div>
+            <!-- Очки -->
+            <div class="ui-element stat-container score-stat" id="scoreContainer">
+                <div class="stat-label">Очки</div>
+                <div class="stat-value" id="scoreValue">0</div>
             </div>
             
-            <!-- Индикатор пуль -->
-            <div class="ui-element bullets-container" id="bulletsIndicator" style="display: none;">
-                <div class="bullets-label">Пули</div>
-                <div class="bullets-icons" id="bulletsIcons">
-                    <!-- Пули будут добавлены через JavaScript -->
-                </div>
+            <!-- Монеты -->
+            <div class="ui-element stat-container coins-stat" id="coinsContainer">
+                <div class="stat-label">Монеты</div>
+                <div class="stat-value" id="coinsValue">50</div>
+            </div>
+            
+            <!-- Волна -->
+            <div class="ui-element stat-container wave-stat" id="waveContainer">
+                <div class="stat-label">Волна</div>
+                <div class="stat-value" id="waveValue">1</div>
+            </div>
+            
+            <!-- Убито -->
+            <div class="ui-element stat-container kills-stat" id="killsContainer">
+                <div class="stat-label">Убито</div>
+                <div class="stat-value" id="killsValue">0</div>
+            </div>
+            
+            <!-- Пули -->
+            <div class="ui-element stat-container bullets-stat" id="bulletsContainer" style="display: none;">
+                <div class="stat-label">Пули</div>
+                <div class="stat-value" id="bulletsValue">1</div>
             </div>
         </div>
     </div>
@@ -1811,7 +1582,7 @@
             if (game.upgrades.multishot.value > 1 && damageTaken > 1) {
                 const bulletsLost = Math.min(game.upgrades.multishot.value - 1, damageTaken - 1);
                 game.upgrades.multishot.value = Math.max(1, game.upgrades.multishot.value - bulletsLost);
-                updateBulletsIndicator();
+                updateBulletsDisplay();
             }
             
             // Активируем эффект повреждения
@@ -1838,110 +1609,41 @@
             return false;
         }
         
-        // Обновление индикатора пуль
-        function updateBulletsIndicator() {
-            const indicator = document.getElementById('bulletsIndicator');
-            const iconsContainer = document.getElementById('bulletsIcons');
+        // Обновление отображения пуль (цифрами)
+        function updateBulletsDisplay() {
+            const bulletsContainer = document.getElementById('bulletsContainer');
+            const bulletsValue = document.getElementById('bulletsValue');
             
-            if (!indicator || !iconsContainer) return;
+            if (!bulletsContainer || !bulletsValue) return;
             
-            // Показываем индикатор только если есть мультивыстрел
+            // Показываем пули только если есть мультивыстрел
             if (game.upgrades.multishot.level > 1 && game.running) {
-                indicator.style.display = 'flex';
-                
-                // Очищаем существующие иконки пуль
-                iconsContainer.innerHTML = '';
-                
-                // Создаем иконки для текущего количества пуль
-                const currentBullets = game.upgrades.multishot.value;
-                const maxBullets = game.upgrades.multishot.level;
-                
-                for (let i = 0; i < maxBullets; i++) {
-                    const bulletIcon = document.createElement('div');
-                    bulletIcon.className = 'bullet-icon';
-                    if (i >= currentBullets) {
-                        bulletIcon.classList.add('lost');
-                    }
-                    iconsContainer.appendChild(bulletIcon);
-                }
+                bulletsContainer.style.display = 'flex';
+                bulletsValue.textContent = game.upgrades.multishot.value;
             } else {
-                indicator.style.display = 'none';
+                bulletsContainer.style.display = 'none';
             }
         }
         
-        // Обновление отображения здоровья квадратиками
+        // Обновление отображения здоровья (цифрами)
         function updateHealthDisplay() {
             const healthText = document.getElementById('shipHealthText');
-            const iconsContainer = document.getElementById('healthIcons');
             
             if (healthText) {
                 healthText.textContent = `${game.playerHealth}/${game.maxHealth}`;
-                healthText.style.color = game.playerHealth > game.maxHealth * 0.5 ? '#88ffaa' : 
-                                         game.playerHealth > game.maxHealth * 0.25 ? '#ffcc66' : '#ff8888';
-            }
-            
-            if (iconsContainer) {
-                // Очищаем существующие иконки
-                iconsContainer.innerHTML = '';
-                
-                // Определяем максимальное количество отображаемых иконок
-                // Для большого количества HP показываем пропорционально меньше иконок
-                let maxIconsToShow;
-                if (game.maxHealth <= 10) {
-                    maxIconsToShow = game.maxHealth;
-                } else if (game.maxHealth <= 20) {
-                    maxIconsToShow = Math.min(15, game.maxHealth);
+                // Меняем цвет в зависимости от уровня здоровья
+                const healthPercent = game.playerHealth / game.maxHealth;
+                if (healthPercent > 0.5) {
+                    healthText.style.color = '#00ff88';
+                } else if (healthPercent > 0.25) {
+                    healthText.style.color = '#ffcc00';
                 } else {
-                    maxIconsToShow = 20; // Максимум 20 иконок
-                }
-                
-                // Вычисляем шаг для отображения (сколько HP на одну иконку)
-                const healthPerIcon = game.maxHealth / maxIconsToShow;
-                
-                // Определяем размер иконок в зависимости от количества
-                const baseSize = 12;
-                const minSize = 8;
-                const size = Math.max(minSize, baseSize - Math.max(0, (maxIconsToShow - 10) * 0.3));
-                
-                // Создаем иконки
-                for (let i = 0; i < maxIconsToShow; i++) {
-                    const healthIcon = document.createElement('div');
-                    healthIcon.className = 'health-icon';
-                    
-                    // Устанавливаем размер через стили
-                    healthIcon.style.width = `${size}px`;
-                    healthIcon.style.height = `${size}px`;
-                    
-                    // Определяем, сколько HP представляет эта иконка
-                    const iconStartHP = i * healthPerIcon;
-                    const iconEndHP = (i + 1) * healthPerIcon;
-                    
-                    // Проверяем, заполнена ли эта иконка
-                    if (game.playerHealth >= iconEndHP) {
-                        // Полностью заполнена
-                        healthIcon.style.background = 'linear-gradient(135deg, #00ff88, #00cc66)';
-                        healthIcon.style.boxShadow = '0 0 3px rgba(0, 255, 136, 0.5)';
-                    } else if (game.playerHealth > iconStartHP) {
-                        // Частично заполнена
-                        const fillPercent = (game.playerHealth - iconStartHP) / healthPerIcon;
-                        if (fillPercent > 0.5) {
-                            healthIcon.style.background = 'linear-gradient(135deg, #ffaa00, #ffcc66)';
-                            healthIcon.style.boxShadow = '0 0 3px rgba(255, 170, 0, 0.5)';
-                        } else {
-                            healthIcon.style.background = 'linear-gradient(135deg, #ff3232, #ff6666)';
-                            healthIcon.style.boxShadow = '0 0 3px rgba(255, 50, 50, 0.5)';
-                        }
-                    } else {
-                        // Пустая
-                        healthIcon.classList.add('lost');
-                    }
-                    
-                    iconsContainer.appendChild(healthIcon);
+                    healthText.style.color = '#ff5555';
                 }
             }
             
-            // Обновляем индикатор пуль
-            updateBulletsIndicator();
+            // Обновляем отображение пуль
+            updateBulletsDisplay();
         }
         
         // Обновление игры с deltaTime
@@ -2241,6 +1943,7 @@
                         upgrade.cost = Math.floor(upgrade.cost * (1.6 + upgrade.level * 0.1)); // Меньший рост стоимости
                         updatePlayerWidth();
                         updatePlayerHitbox();
+                        updateBulletsDisplay();
                         break;
                     case 'health':
                         game.maxHealth += 1;
@@ -2248,11 +1951,11 @@
                         upgrade.value = game.maxHealth;
                         upgrade.level++;
                         upgrade.cost = Math.floor(upgrade.cost * (1.4 + upgrade.level * 0.07)); // Меньший рост стоимости
+                        updateHealthDisplay();
                         break;
                 }
                 
                 updateAllDisplays();
-                updateHealthDisplay();
                 saveGame();
             }
         }
@@ -2263,6 +1966,7 @@
             
             // Восстанавливаем мультивыстрел до сохраненного уровня
             game.upgrades.multishot.value = game.upgrades.multishot.level;
+            updateBulletsDisplay();
             
             if (game.wave >= 5) {
                 const bonus = Math.floor(game.wave / 2.5); // Увеличил бонус за конец игры
@@ -2279,9 +1983,9 @@
             updateMenuDisplays();
             
             // Скрываем индикатор пуль
-            const bulletsIndicator = document.getElementById('bulletsIndicator');
-            if (bulletsIndicator) {
-                bulletsIndicator.style.display = 'none';
+            const bulletsContainer = document.getElementById('bulletsContainer');
+            if (bulletsContainer) {
+                bulletsContainer.style.display = 'none';
             }
         }
         
@@ -2304,6 +2008,7 @@
             
             // Восстанавливаем мультивыстрел до сохраненного уровня
             game.upgrades.multishot.value = game.upgrades.multishot.level;
+            updateBulletsDisplay();
             
             updatePlayerWidth();
             initPlayer();
@@ -2429,6 +2134,7 @@
             setupButtons();
             updateAllDisplays();
             updateHealthDisplay();
+            updateBulletsDisplay();
             
             document.getElementById('startMenu').style.display = 'flex';
             
